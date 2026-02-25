@@ -1,0 +1,90 @@
+name: "Stage 2b — Test Environment"
+
+on:
+  push:
+    branches:
+      - test
+
+jobs:
+  deploy-test:
+    name: Deploy to test environment
+    runs-on: ubuntu-latest
+    environment:
+      name: test
+      url: ${{ secrets.TEST_URL }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Get secrets from Bitwarden
+        uses: bitwarden/sm-action@v2
+        with:
+          access_token: ${{ secrets.BWS_ACCESS_TOKEN }}
+          secrets: |
+            ${{ secrets.BWS_TEST_DB_ID }} > DATABASE_URL
+            ${{ secrets.BWS_TEST_KEYCLOAK_SECRET_ID }} > KEYCLOAK_CLIENT_SECRET
+
+      - name: Deploy to test environment
+        run: echo "Deploying to test environment (AWS ca-central-1)"
+
+  integration-tests:
+    name: Full integration tests on test env
+    needs: deploy-test
+    runs-on: ubuntu-latest
+    environment:
+      name: test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Install Playwright
+        run: npx playwright install --with-deps chromium
+
+      - name: E2E tests on test environment
+        run: pnpm test:e2e
+        env:
+          BASE_URL: ${{ secrets.TEST_URL }}
+          API_URL: ${{ secrets.TEST_API_URL }}
+
+      - name: WCAG audit on test env
+        run: pnpm test:wcag
+        env:
+          BASE_URL: ${{ secrets.TEST_URL }}
+
+      - name: API contract tests
+        run: pnpm test:contract
+        env:
+          API_URL: ${{ secrets.TEST_API_URL }}
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-env-report-${{ github.sha }}
+          path: |
+            playwright-report/
+            wcag-report/
+          retention-days: 30
+
+  promote-to-staging:
+    name: Auto-promote test → staging on success
+    needs: integration-tests
+    runs-on: ubuntu-latest
+    if: success()
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Merge test into staging
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git fetch origin
+          git checkout staging
+          git merge origin/test --no-ff -m "chore: promote test → staging [${{ github.sha }}]"
+          git push origin staging
