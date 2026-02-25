@@ -10,21 +10,6 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  # ── Secrets injection via Bitwarden ──────────────────────────────────────
-  secrets:
-    name: Load secrets (Bitwarden SM)
-    runs-on: ubuntu-latest
-    outputs:
-      database_url: ${{ steps.bws.outputs.database_url }}
-    steps:
-      - name: Get secrets from Bitwarden
-        uses: bitwarden/sm-action@v2
-        id: bws
-        with:
-          access_token: ${{ secrets.BWS_ACCESS_TOKEN }}
-          secrets: |
-            ${{ secrets.BWS_DATABASE_URL_ID }} > DATABASE_URL
-
   # ── Lint & Format ──────────────────────────────────────────────────────
   lint:
     name: Lint + Format check
@@ -62,6 +47,9 @@ jobs:
   test:
     name: Unit tests (min 80% coverage)
     runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: postgresql://lms:lms_test@localhost:5432/lms_test
+      NODE_ENV: test
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
@@ -167,7 +155,7 @@ jobs:
 
   # ── Final gate: all must pass ─────────────────────────────────────────
   pr-gate-passed:
-    name: ✅ PR Gate passed
+    name: PR Gate passed
     needs: [lint, typecheck, test, dependency-scan, license-check, wcag, loi25-gate]
     runs-on: ubuntu-latest
     steps:
