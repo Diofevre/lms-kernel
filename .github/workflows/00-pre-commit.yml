@@ -1,0 +1,53 @@
+name: "Stage 0 — Pre-commit validation"
+
+on:
+  push:
+    branches-ignore:
+      - main
+      - staging
+
+jobs:
+  gitleaks:
+    name: Secret detection (Gitleaks)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # full history scan
+
+      - name: Run Gitleaks
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITLEAKS_LICENSE: ${{ secrets.GITLEAKS_LICENSE }}
+
+  conventional-commits:
+    name: Conventional commit format
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check commit messages
+        uses: wagoid/commitlint-github-action@v6
+        with:
+          configFile: commitlint.config.js
+
+  gpg-signature:
+    name: Verify GPG commit signatures
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check commit signatures
+        run: |
+          git log --format="%H %G?" origin/${{ github.base_ref }}..HEAD | while read hash sig; do
+            if [ "$sig" != "G" ] && [ "$sig" != "U" ]; then
+              echo "❌ Commit $hash is not GPG signed (status: $sig)"
+              exit 1
+            fi
+          done
+          echo "✅ All commits are GPG signed"

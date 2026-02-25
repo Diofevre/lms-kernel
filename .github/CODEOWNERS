@@ -1,0 +1,29 @@
+# CODEOWNERS — Every PR requires review from the relevant owner
+# Docs: https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+
+# Default: all files require review from lead
+*                                   @Diofevre
+
+# Security-critical packages — require security officer review
+packages/audit/**                   @Diofevre
+packages/iam/**                     @Diofevre
+packages/compliance/**              @Diofevre
+
+# CI/CD pipelines — require lead review (never modified by agents alone)
+.github/workflows/**                @Diofevre
+
+# Infrastructure and secrets — require lead review
+.devcontainer/**                    @Diofevre
+**/docker-compose*.yml              @Diofevre
+**/*.tf                             @Diofevre
+
+# API — backend owner
+apps/api/**                         @Diofevre
+
+# Web frontend — frontend owner
+apps/web/**                         @Diofevre
+
+# Database schema — requires explicit review (migrations are irreversible)
+packages/db/**                      @Diofevre
+**/prisma/schema.prisma             @Diofevre
+**/migrations/**                    @Diofevre

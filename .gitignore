@@ -1,0 +1,53 @@
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Build outputs
+dist/
+.next/
+out/
+build/
+*.tsbuildinfo
+
+# Environment — NEVER commit real secrets
+.env
+.env.local
+.env.*.local
+!.env.example
+
+# Coverage & test artifacts
+coverage/
+.nyc_output/
+playwright-report/
+test-results/
+mutation-report/
+
+# Cache
+.turbo/
+.cache/
+*.log
+npm-debug.log*
+yarn-debug.log*
+pnpm-debug.log*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/settings.json
+.idea/
+*.swp
+
+# Security scan artifacts (kept in CI, not in repo)
+trivy-results.sarif
+gitleaks-report.json
+zap-report.html
+sbom.cdx.json
+sonar-report.json
+semgrep-results.json
+
+# Docker
+*.env.docker
+docker-compose.override.yml

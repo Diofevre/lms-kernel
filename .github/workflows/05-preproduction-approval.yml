@@ -1,0 +1,133 @@
+name: "Stage 5 — Pre-production Approval"
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm_manual_qa:
+        description: "Manual QA completed and approved?"
+        required: true
+        type: boolean
+      confirm_loi25:
+        description: "Privacy officer (RPP) signed off — Loi 25 compliant?"
+        required: true
+        type: boolean
+      confirm_security:
+        description: "Security officer reviewed DAST/CVE report?"
+        required: true
+        type: boolean
+      release_notes:
+        description: "Brief release summary (for changelog)"
+        required: true
+        type: string
+
+jobs:
+  validate-approvals:
+    name: Validate all sign-offs
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check all approvals
+        run: |
+          FAILED=false
+
+          if [ "${{ inputs.confirm_manual_qa }}" != "true" ]; then
+            echo "❌ Manual QA not confirmed"
+            FAILED=true
+          fi
+
+          if [ "${{ inputs.confirm_loi25 }}" != "true" ]; then
+            echo "❌ Loi 25 / Privacy officer sign-off missing"
+            FAILED=true
+          fi
+
+          if [ "${{ inputs.confirm_security }}" != "true" ]; then
+            echo "❌ Security officer sign-off missing"
+            FAILED=true
+          fi
+
+          if [ "$FAILED" = "true" ]; then
+            echo "❌ Pre-production blocked — missing required approvals"
+            exit 1
+          fi
+
+          echo "✅ All approvals confirmed — ready for production"
+
+  generate-release-dossier:
+    name: Generate institutional release dossier (PDF)
+    needs: validate-approvals
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: "*-${{ github.sha }}"
+          merge-multiple: true
+          path: release-artifacts/
+
+      - name: Generate release dossier
+        run: |
+          node scripts/generate-release-dossier.js \
+            --sha "${{ github.sha }}" \
+            --release-notes "${{ inputs.release_notes }}" \
+            --approver "${{ github.actor }}" \
+            --date "$(date -u)"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: release-dossier-${{ github.sha }}
+          path: release-dossier/
+          retention-days: 3650  # 10 years — institutional requirement
+
+  promote-to-main:
+    name: Promote staging → main
+    needs: generate-release-dossier
+    runs-on: ubuntu-latest
+    environment:
+      name: production-gate
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: staging
+
+      - name: Create release tag
+        run: |
+          VERSION=$(cat package.json | jq -r .version)
+          git tag "v${VERSION}-$(date +%Y%m%d)" -m "${{ inputs.release_notes }}"
+          git push origin --tags
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ github.run_number }}
+          name: "Release v${{ github.run_number }}"
+          body: |
+            ## Release Notes
+            ${{ inputs.release_notes }}
+
+            ## Approvals
+            - Manual QA: ✅
+            - Loi 25 / Privacy: ✅
+            - Security: ✅
+            - Approved by: @${{ github.actor }}
+            - Date: ${{ github.event.created_at }}
+
+            ## Artifacts
+            - SBOM (CycloneDX): see release-dossier
+            - WCAG Report: see release-dossier
+            - Security scan report: see release-dossier
+          files: release-dossier/*
+          draft: false

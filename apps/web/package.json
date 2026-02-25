@@ -1,0 +1,49 @@
+{
+  "name": "@lms/web",
+  "version": "0.1.0",
+  "private": true,
+  "description": "LMS Kernel — Next.js frontend (WCAG 2.1 AA, Shadcn/UI)",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run --coverage",
+    "test:wcag": "playwright test tests/wcag/",
+    "test:wcag:staging": "BASE_URL=$STAGING_URL playwright test tests/wcag/",
+    "test:e2e": "playwright test tests/e2e/",
+    "test:smoke": "playwright test tests/smoke/",
+    "clean": "rm -rf .next"
+  },
+  "dependencies": {
+    "@lms/core": "workspace:*",
+    "@lms/iam": "workspace:*",
+    "next": "^14.0.0",
+    "react": "^18.0.0",
+    "react-dom": "^18.0.0",
+    "@radix-ui/react-dialog": "^1.0.0",
+    "@radix-ui/react-dropdown-menu": "^2.0.0",
+    "@radix-ui/react-navigation-menu": "^1.0.0",
+    "@radix-ui/react-toast": "^1.0.0",
+    "@radix-ui/react-tooltip": "^1.0.0",
+    "class-variance-authority": "^0.7.0",
+    "clsx": "^2.0.0",
+    "tailwind-merge": "^2.0.0",
+    "tailwindcss": "^3.4.0",
+    "next-auth": "^5.0.0-beta.0",
+    "lucide-react": "^0.400.0"
+  },
+  "devDependencies": {
+    "@types/react": "^18.0.0",
+    "@types/react-dom": "^18.0.0",
+    "@types/node": "^20.0.0",
+    "typescript": "^5.4.0",
+    "autoprefixer": "^10.0.0",
+    "postcss": "^8.0.0",
+    "@playwright/test": "^1.44.0",
+    "axe-playwright": "^2.0.0",
+    "vitest": "^1.0.0",
+    "@vitejs/plugin-react": "^4.0.0"
+  }
+}

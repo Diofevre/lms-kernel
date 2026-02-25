@@ -1,0 +1,127 @@
+name: "Stage 6 — Production Canary Deploy"
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  canary-5:
+    name: Canary 5% — initial rollout
+    runs-on: ubuntu-latest
+    environment:
+      name: production
+      url: ${{ secrets.PRODUCTION_URL }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Get production secrets (Bitwarden SM)
+        uses: bitwarden/sm-action@v2
+        with:
+          access_token: ${{ secrets.BWS_ACCESS_TOKEN }}
+          secrets: |
+            ${{ secrets.BWS_PROD_DB_ID }} > DATABASE_URL
+            ${{ secrets.BWS_PROD_KEYCLOAK_SECRET_ID }} > KEYCLOAK_CLIENT_SECRET
+            ${{ secrets.BWS_PROD_AUDIT_KEY_ID }} > AUDIT_LOG_ENCRYPTION_KEY
+
+      - name: Deploy canary — 5% traffic
+        run: |
+          echo "Deploying ${{ github.ref_name }} to 5% of production traffic"
+          # Add your canary deploy command (ECS blue/green, k8s canary, etc.)
+
+      - name: Wait and run smoke tests
+        run: |
+          sleep 120  # 2 minutes stabilization
+          pnpm test:smoke:prod
+        env:
+          BASE_URL: ${{ secrets.PRODUCTION_URL }}
+
+  canary-25:
+    name: Canary 25% — expand rollout
+    needs: canary-5
+    runs-on: ubuntu-latest
+    environment:
+      name: production
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Expand to 25% traffic
+        run: |
+          echo "Expanding to 25% of production traffic"
+
+      - name: Wait and validate metrics
+        run: |
+          sleep 300  # 5 minutes
+          # Check error rate < 0.1% and p95 < 500ms
+          node scripts/check-production-metrics.js --threshold-error 0.1 --threshold-p95 500
+        env:
+          MONITORING_API_KEY: ${{ secrets.MONITORING_API_KEY }}
+          MONITORING_URL: ${{ secrets.MONITORING_URL }}
+
+  canary-100:
+    name: Full rollout — 100% traffic
+    needs: canary-25
+    runs-on: ubuntu-latest
+    environment:
+      name: production
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Full production rollout
+        run: echo "Rolling out to 100% of production traffic"
+
+      - name: Final smoke tests
+        run: pnpm test:smoke:prod
+        env:
+          BASE_URL: ${{ secrets.PRODUCTION_URL }}
+
+      - name: Confirm deployment successful
+        run: |
+          echo "## ✅ Production Deployment Complete" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Release:** ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Time:** $(date -u)" >> $GITHUB_STEP_SUMMARY
+          echo "**Actor:** @${{ github.actor }}" >> $GITHUB_STEP_SUMMARY
+
+  auto-rollback:
+    name: Auto-rollback on failure
+    needs: [canary-5, canary-25, canary-100]
+    if: failure()
+    runs-on: ubuntu-latest
+    environment:
+      name: production
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Trigger rollback
+        run: |
+          echo "❌ Canary failed — initiating automatic rollback"
+          # Add your rollback command here
+          echo "Rollback completed — previous version restored"
+
+      - name: Notify on rollback
+        uses: slackapi/slack-github-action@v1.26.0
+        with:
+          payload: |
+            {
+              "text": "🚨 *LMS Kernel — Auto-rollback triggered*\nRelease: ${{ github.ref_name }}\nReason: Canary deployment failed\nRolled back by: GitHub Actions"
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
+
+  notify-success:
+    name: Notify deployment success (Slack)
+    needs: canary-100
+    if: success()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Slack notification
+        uses: slackapi/slack-github-action@v1.26.0
+        with:
+          payload: |
+            {
+              "text": "✅ *LMS Kernel — Production deployment successful*\nRelease: ${{ github.ref_name }}\nDeployed by: @${{ github.actor }}"
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK

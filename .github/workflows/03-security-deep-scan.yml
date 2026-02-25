@@ -1,0 +1,124 @@
+name: "Stage 3 — Security Deep Scan"
+
+on:
+  push:
+    branches:
+      - develop
+  schedule:
+    # Run full scan every night at 2am UTC regardless of push
+    - cron: "0 2 * * *"
+
+jobs:
+  sonarcloud:
+    name: SonarCloud analysis
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm test --coverage
+      - name: SonarCloud scan
+        uses: SonarSource/sonarcloud-github-action@master
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+
+  dast-owasp-zap:
+    name: DAST — OWASP ZAP full scan (staging)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run ZAP full scan against staging API
+        uses: zaproxy/action-full-scan@v0.10.0
+        with:
+          target: ${{ secrets.STAGING_API_URL }}
+          rules_file_name: .zap/rules.tsv
+          cmd_options: "-a"
+          fail_action: true
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: zap-report-${{ github.sha }}
+          path: report_html.html
+          retention-days: 90
+
+  checkov-iac:
+    name: Infrastructure as Code scan (Checkov)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run Checkov
+        uses: bridgecrewio/checkov-action@v12
+        with:
+          directory: .
+          framework: dockerfile,github_actions,secrets
+          soft_fail: false
+          output_format: sarif
+          output_file_path: checkov.sarif
+
+      - uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: checkov.sarif
+
+  gitleaks-full-history:
+    name: Full git history secret scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Gitleaks full history scan
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITLEAKS_LICENSE: ${{ secrets.GITLEAKS_LICENSE }}
+
+  dependency-full-audit:
+    name: Full dependency audit (Snyk)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+
+      - name: Snyk dependency scan
+        uses: snyk/actions/node@master
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        with:
+          args: --severity-threshold=high --all-projects
+
+  security-report:
+    name: Generate security report
+    needs: [sonarcloud, dast-owasp-zap, checkov-iac, gitleaks-full-history, dependency-full-audit]
+    runs-on: ubuntu-latest
+    if: always()
+    steps:
+      - name: Summarize security scan results
+        run: |
+          echo "## Security Deep Scan Results — $(date)" >> $GITHUB_STEP_SUMMARY
+          echo "| Check | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|-------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| SonarCloud | ${{ needs.sonarcloud.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| OWASP ZAP DAST | ${{ needs.dast-owasp-zap.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Checkov IaC | ${{ needs.checkov-iac.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Gitleaks History | ${{ needs.gitleaks-full-history.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Snyk Full Audit | ${{ needs.dependency-full-audit.result }} |" >> $GITHUB_STEP_SUMMARY
