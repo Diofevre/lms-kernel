@@ -1,6 +1,23 @@
 version: "3.9"
 
 services:
+  # ── Main dev container (code runs here) ───────────────────────────────
+  app:
+    image: mcr.microsoft.com/devcontainers/typescript-node:1-22-bookworm
+    volumes:
+      - ../..:/workspaces/lms-kernel:cached
+    command: sleep infinity
+    environment:
+      NODE_ENV: development
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - lms-dev
+
+  # ── PostgreSQL ────────────────────────────────────────────────────────
   postgres:
     image: postgres:16-alpine
     restart: unless-stopped
@@ -14,10 +31,13 @@ services:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U lms"]
-      interval: 10s
+      interval: 5s
       timeout: 5s
-      retries: 5
+      retries: 10
+    networks:
+      - lms-dev
 
+  # ── Redis (BullMQ jobs) ───────────────────────────────────────────────
   redis:
     image: redis:7-alpine
     restart: unless-stopped
@@ -26,7 +46,15 @@ services:
     command: redis-server --appendonly yes
     volumes:
       - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    networks:
+      - lms-dev
 
+  # ── Keycloak (IAM — dev mode, in-memory, no external DB needed) ───────
   keycloak:
     image: quay.io/keycloak/keycloak:24.0
     restart: unless-stopped
@@ -34,10 +62,18 @@ services:
       KEYCLOAK_ADMIN: admin
       KEYCLOAK_ADMIN_PASSWORD: admin_dev_only
       KC_DB: dev-mem
+      KC_HTTP_ENABLED: "true"
+      KC_HOSTNAME_STRICT: "false"
     ports:
       - "8080:8080"
     command: start-dev
+    networks:
+      - lms-dev
 
 volumes:
   postgres_data:
   redis_data:
+
+networks:
+  lms-dev:
+    driver: bridge

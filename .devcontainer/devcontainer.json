@@ -1,16 +1,16 @@
 {
   "name": "LMS Kernel — Dev Container",
-  "image": "mcr.microsoft.com/devcontainers/typescript-node:1-22-bookworm",
+  "dockerComposeFile": "docker-compose.yml",
+  "service": "app",
+  "workspaceFolder": "/workspaces/lms-kernel",
 
   "features": {
     "ghcr.io/devcontainers/features/node:1": { "version": "22" },
-    "ghcr.io/devcontainers/features/docker-in-docker:2": {},
-    "ghcr.io/devcontainers/features/github-cli:1": {},
-    "ghcr.io/devcontainers/features/kubectl-helm-minikube:1": {}
+    "ghcr.io/devcontainers/features/github-cli:1": {}
   },
 
   "onCreateCommand": "npm install -g pnpm@9 && pnpm install",
-  "postCreateCommand": "pnpm run build --filter=@lms/core --filter=@lms/audit --filter=@lms/compliance",
+  "postCreateCommand": "cp .env.codespace .env && pnpm run build --filter=@lms/core --filter=@lms/audit --filter=@lms/compliance && echo '✅ LMS Kernel ready — PostgreSQL, Redis, Keycloak are running'",
 
   "customizations": {
     "vscode": {
@@ -22,7 +22,6 @@
         "ms-azuretools.vscode-docker",
         "GitHub.copilot",
         "ms-playwright.playwright",
-        "golang.go",
         "usernamehw.errorlens",
         "streetsidesoftware.code-spell-checker",
         "streetsidesoftware.code-spell-checker-french"
@@ -50,11 +49,5 @@
 
   "remoteEnv": {
     "NODE_ENV": "development"
-  },
-
-  "secrets": {
-    "DATABASE_URL": { "description": "PostgreSQL connection string" },
-    "KEYCLOAK_CLIENT_SECRET": { "description": "Keycloak client secret" },
-    "AUDIT_LOG_ENCRYPTION_KEY": { "description": "AES-256 key for audit log encryption" }
   }
 }
