@@ -1,0 +1,121 @@
+// =============================================================================
+// LMS Kernel — Prisma Schema
+// Multi-tenant, Loi 25 compliant, RLS-enforced
+// =============================================================================
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider          = "postgresql"
+  url               = env("DATABASE_URL")
+  shadowDatabaseUrl = env("DATABASE_URL_SHADOW")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// TENANT — Une organisation = un tenant [LMSK-14]
+// ─────────────────────────────────────────────────────────────────────────────
+model Tenant {
+  id        String    @id @default(uuid()) @db.Uuid
+  slug      String    @unique              // sous-domaine : org.lms.example.com
+  name      String
+  isActive  Boolean   @default(true)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?                      // SOFT DELETE — jamais hard delete
+
+  users    User[]
+  consents Consent[]
+
+  @@index([slug])
+  @@index([deletedAt])
+  @@map("tenants")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// USER — Scoped au tenant, auth déléguée à Keycloak [LMSK-15]
+// ─────────────────────────────────────────────────────────────────────────────
+// ⚠️  RÈGLE : Aucun champ password — Keycloak gère l'auth
+// ⚠️  Loi 25 : email est PII — @RetentionPolicy(days: 2555)
+model User {
+  id              String    @id @default(uuid()) @db.Uuid
+  tenantId        String    @db.Uuid             // FK tenant — OBLIGATOIRE
+  keycloakId      String    @unique              // ID Keycloak (sub du JWT)
+  email           String    // @RetentionPolicy(days: 2555) — 7 ans (Loi 25)
+  role            UserRole  @default(LEARNER)
+  preferredLocale String    @default("fr")
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  deletedAt       DateTime?                      // SOFT DELETE uniquement
+
+  tenant   Tenant    @relation(fields: [tenantId], references: [id])
+  consents Consent[]
+
+  @@unique([tenantId, email])
+  @@index([tenantId])
+  @@index([keycloakId])
+  @@index([tenantId, deletedAt])
+  @@map("users")
+}
+
+enum UserRole {
+  SUPER_ADMIN  // accès cross-tenant (Diofevre seulement)
+  TENANT_ADMIN // admin d'une organisation
+  INSTRUCTOR   // créateur de cours
+  LEARNER      // apprenant
+  AUDITOR      // lecture seule, rapports conformité
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// CONSENT — Loi 25 : traçabilité du consentement [LMSK-16]
+// ─────────────────────────────────────────────────────────────────────────────
+model Consent {
+  id        String         @id @default(uuid()) @db.Uuid
+  tenantId  String         @db.Uuid
+  userId    String         @db.Uuid
+  purpose   ConsentPurpose
+  givenAt   DateTime       @default(now())
+  expiresAt DateTime?
+  revokedAt DateTime?
+  ipHash    String         // IP hashée (SHA-256) — jamais l'IP brute (Loi 25)
+  userAgent String?
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+  user   User   @relation(fields: [userId], references: [id])
+
+  @@index([tenantId, userId])
+  @@index([tenantId, purpose])
+  @@map("consents")
+}
+
+enum ConsentPurpose {
+  REQUIRED  // fonctionnel — pas de choix
+  ANALYTICS // statistiques d'usage
+  MARKETING // communications marketing
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// AUDIT LOG — Append-only, chaîne SHA-256 [LMSK-17]
+// ─────────────────────────────────────────────────────────────────────────────
+// ⚠️  RÈGLE ABSOLUE : Jamais de UPDATE ou DELETE sur cette table
+// ⚠️  La migration SQL doit interdire UPDATE/DELETE via une policy RLS
+model AuditLog {
+  id           String   @id @default(uuid()) @db.Uuid
+  tenantId     String   @db.Uuid
+  actorId      String   @db.Uuid              // userId qui a fait l'action
+  actorType    String   @default("user")      // "user" | "system" | "agent"
+  action       String                          // ex: "user.created", "course.deleted"
+  entityType   String                          // ex: "User", "Course"
+  entityId     String   @db.Uuid
+  metadata     Json?                           // données contextuelles (sanitisées)
+  previousHash String                          // hash de l'entrée précédente
+  hash         String   @unique               // SHA-256(id+tenantId+action+previousHash)
+  dataRegion   String   @default("ca-central-1") // Loi 25 — résidence données
+  createdAt    DateTime @default(now())
+
+  @@index([tenantId, createdAt])
+  @@index([tenantId, entityType, entityId])
+  @@index([tenantId, actorId])
+  @@map("audit_logs")
+}

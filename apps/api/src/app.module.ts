@@ -9,6 +9,7 @@ import { AuthModule } from "./modules/auth/auth.module.js";
 import { PrivacyModule } from "./modules/privacy/privacy.module.js";
 import { AuditModule } from "./modules/audit/audit.module.js";
 import { TenantModule } from "./modules/tenant/tenant.module.js";
+import { DatabaseModule } from "./modules/database/database.module.js";
 
 @Module({
   imports: [
@@ -18,6 +19,9 @@ import { TenantModule } from "./modules/tenant/tenant.module.js";
       { name: "medium", ttl: 60000, limit: 200 },  // 200 req/min
       { name: "long", ttl: 3600000, limit: 1000 }, // 1000 req/hour
     ]),
+
+    // ── Database (Prisma + RLS) ────────────────────────────────────────
+    DatabaseModule,
 
     // ── Kernel modules ─────────────────────────────────────────────────
     HealthModule,
