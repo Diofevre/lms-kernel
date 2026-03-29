@@ -1,12 +1,23 @@
-import { Controller, Get, Query, UseGuards } from "@nestjs/common";
-import { ApiBearerAuth, ApiOperation, ApiTags, ApiQuery } from "@nestjs/swagger";
+import { Controller, Get, Query, Req, UseGuards } from "@nestjs/common";
+import { ApiBearerAuth, ApiOperation, ApiTags } from "@nestjs/swagger";
 import { AuthGuard, Roles } from "../auth/auth.guard.js";
+import { AuditService } from "./audit.service.js";
+import { AuditQueryDto } from "./audit.dto.js";
+import type { FastifyRequest } from "fastify";
+import type { AuthenticatedUser } from "@kern/iam";
+
+interface AuthenticatedRequest extends FastifyRequest {
+  user: AuthenticatedUser;
+  tenantId?: string;
+}
 
 @ApiTags("audit")
 @Controller({ path: "audit", version: "1" })
 @UseGuards(AuthGuard)
 @ApiBearerAuth("Keycloak")
 export class AuditController {
+  constructor(private readonly auditService: AuditService) {}
+
   @Get("logs")
   @Roles("auditor", "tenant_admin", "privacy_officer")
   @ApiOperation({
@@ -16,18 +27,17 @@ export class AuditController {
       "The log is append-only and tamper-evident (SHA-256 hash chain). " +
       "Access requires auditor, tenant_admin, or privacy_officer role.",
   })
-  @ApiQuery({ name: "from", required: false, type: String, example: "2024-01-01T00:00:00Z" })
-  @ApiQuery({ name: "to", required: false, type: String })
-  @ApiQuery({ name: "action", required: false, type: String })
-  @ApiQuery({ name: "limit", required: false, type: Number, example: 50 })
-  queryLogs(
-    @Query("from") _from?: string,
-    @Query("to") _to?: string,
-    @Query("action") _action?: string,
-    @Query("limit") _limit?: number,
-  ): { message: string } {
-    // TODO Sprint 1: implement with AuditLog from @lms/audit
-    return { message: "Audit log query — implementation in Sprint 1" };
+  async queryLogs(
+    @Req() req: AuthenticatedRequest,
+    @Query() query: AuditQueryDto,
+  ) {
+    const tenantId = req.tenantId ?? req.user.tenantId;
+    const options: { from?: string; to?: string; action?: string; limit?: number } = {};
+    if (query.from !== undefined) options.from = query.from;
+    if (query.to !== undefined) options.to = query.to;
+    if (query.action !== undefined) options.action = query.action;
+    if (query.limit !== undefined) options.limit = query.limit;
+    return this.auditService.queryLogs(tenantId, options);
   }
 
   @Get("verify")
@@ -36,7 +46,8 @@ export class AuditController {
     summary: "Verify audit log chain integrity",
     description: "Recomputes SHA-256 hash chain to detect any tampering.",
   })
-  verifyChain(): { message: string } {
-    return { message: "Chain verification — implementation in Sprint 1" };
+  async verifyChain(@Req() req: AuthenticatedRequest) {
+    const tenantId = req.tenantId ?? req.user.tenantId;
+    return this.auditService.verifyChain(tenantId);
   }
 }

@@ -1,5 +1,5 @@
 /**
- * @lms/compliance — Loi 25 (Québec) compliance types
+ * @kern/compliance — Loi 25 (Québec) compliance types
  *
  * Loi modernisant des dispositions législatives en matière de
  * protection des renseignements personnels — Bill 64
@@ -12,9 +12,8 @@ export type PIICategory =
   | "contact"        // Email, phone, address
   | "financial"      // Payment info, income
   | "health"         // Medical records, disabilities
-  | "biometric"      // Fingerprints, facial recognition (télésurveillance)
+  | "biometric"      // Fingerprints, facial recognition
   | "behavioral"     // Browsing, usage patterns
-  | "academic"       // Grades, transcripts, certificates
   | "employment"     // HR data, performance
   | "location";      // IP address, GPS
 

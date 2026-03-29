@@ -1,9 +1,12 @@
 import { Controller, Get } from "@nestjs/common";
 import { ApiTags, ApiOperation } from "@nestjs/swagger";
+import { PrismaService } from "../../prisma/prisma.service.js";
 
 @ApiTags("health")
 @Controller("health")
 export class HealthController {
+  constructor(private readonly prisma: PrismaService) {}
+
   @Get()
   @ApiOperation({ summary: "Liveness probe" })
   liveness(): { status: string; timestamp: string } {
@@ -12,11 +15,29 @@ export class HealthController {
 
   @Get("ready")
   @ApiOperation({ summary: "Readiness probe" })
-  readiness(): { status: string; services: Record<string, string> } {
-    // TODO: check DB + Redis connectivity in Sprint 1
+  async readiness(): Promise<{
+    status: string;
+    timestamp: string;
+    services: Record<string, string>;
+  }> {
+    let dbStatus = "ok";
+    try {
+      await this.prisma.$queryRawUnsafe("SELECT 1");
+    } catch {
+      dbStatus = "error";
+    }
+
+    const overallStatus = dbStatus === "ok" ? "ok" : "degraded";
+
     return {
-      status: "ok",
-      services: { database: "ok", redis: "ok", keycloak: "ok" },
+      status: overallStatus,
+      timestamp: new Date().toISOString(),
+      services: {
+        database: dbStatus,
+        // Redis and Keycloak checks can be added when those services are integrated
+        redis: "unchecked",
+        keycloak: "unchecked",
+      },
     };
   }
 }

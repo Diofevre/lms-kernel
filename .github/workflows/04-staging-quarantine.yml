@@ -1,9 +1,8 @@
 name: "Stage 4 — Staging Quarantine"
 
 on:
-  push:
-    branches:
-      - staging
+  workflow_dispatch:
+    # Template — will be activated when staging/production environments are ready
 
 env:
   QUARANTINE_HOURS: 72  # Minimum 72h before Stage 5 is allowed

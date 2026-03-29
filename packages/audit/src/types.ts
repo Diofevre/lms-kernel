@@ -1,5 +1,5 @@
 /**
- * @lms/audit — Immutable audit log types
+ * @kern/audit — Immutable audit log types
  *
  * Audit entries are append-only and form a hash chain:
  * each entry contains the SHA-256 hash of the previous entry.
@@ -8,7 +8,8 @@
  * Compliance: Loi 25 (Quebec), LPRPDE, institutional requirements.
  */
 
-export type AuditAction =
+/** Core audit actions — apps extend with AppAuditAction<T> */
+export type CoreAuditAction =
   // Auth
   | "auth.login"
   | "auth.logout"
@@ -34,16 +35,16 @@ export type AuditAction =
   | "admin.tenant_created"
   | "admin.module_enabled"
   | "admin.module_disabled"
-  // Content
-  | "content.course_published"
-  | "content.course_unpublished"
-  | "content.exam_started"
-  | "content.exam_submitted"
-  | "content.grade_assigned"
   // Security
   | "security.suspicious_activity"
   | "security.api_key_rotated"
   | "security.secret_accessed";
+
+/** Extend with app-specific actions: type MyActions = AppAuditAction<"file.uploaded" | "file.downloaded"> */
+export type AppAuditAction<T extends string = never> = CoreAuditAction | T;
+
+/** Default AuditAction type for backward compatibility */
+export type AuditAction = CoreAuditAction;
 
 export interface AuditEntry {
   /** UUID v4 */
@@ -62,7 +63,7 @@ export interface AuditEntry {
   resource: AuditResource;
 
   /** Additional context (sanitized — no PII unless strictly necessary) */
-  metadata?: Record<string, unknown>;
+  metadata?: Record<string, unknown> | undefined;
 
   /** Tenant this entry belongs to */
   tenantId: string;

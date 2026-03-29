@@ -3,12 +3,13 @@ import {
   CanActivate,
   ExecutionContext,
   UnauthorizedException,
+  ForbiddenException,
   SetMetadata,
 } from "@nestjs/common";
 import { Reflector } from "@nestjs/core";
 import { createRemoteJWKSet, jwtVerify } from "jose";
 import type { FastifyRequest } from "fastify";
-import type { KeycloakTokenPayload, AuthenticatedUser, KernelRole } from "@lms/iam";
+import type { KeycloakTokenPayload, AuthenticatedUser, KernelRole } from "@kern/iam";
 
 export const ROLES_KEY = "kernel_roles";
 export const Roles = (...roles: KernelRole[]) => SetMetadata(ROLES_KEY, roles);
@@ -28,7 +29,7 @@ export class AuthGuard implements CanActivate {
 
   constructor(private readonly reflector: Reflector) {
     const keycloakUrl = process.env["KEYCLOAK_URL"] ?? "http://localhost:8080";
-    const realm = process.env["KEYCLOAK_REALM"] ?? "lms";
+    const realm = process.env["KEYCLOAK_REALM"] ?? "kern";
     this.issuer = `${keycloakUrl}/realms/${realm}`;
     this.jwks = createRemoteJWKSet(new URL(`${this.issuer}/protocol/openid-connect/certs`));
   }
@@ -49,7 +50,7 @@ export class AuthGuard implements CanActivate {
     try {
       const { payload } = await jwtVerify(token, this.jwks, {
         issuer: this.issuer,
-        audience: process.env["KEYCLOAK_CLIENT_ID"] ?? "lms-api",
+        audience: process.env["KEYCLOAK_CLIENT_ID"] ?? "kern-api",
       });
 
       const keycloakPayload = payload as unknown as KeycloakTokenPayload;
@@ -67,7 +68,7 @@ export class AuthGuard implements CanActivate {
     if (requiredRoles && requiredRoles.length > 0) {
       const userRoles = request.user?.roles ?? [];
       const hasRole = requiredRoles.some((r) => userRoles.includes(r));
-      if (!hasRole) throw new UnauthorizedException("Insufficient permissions");
+      if (!hasRole) throw new ForbiddenException("Insufficient permissions");
     }
 
     return true;

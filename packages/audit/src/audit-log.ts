@@ -13,7 +13,22 @@ import type { AuditEntry, AuditAction, AuditActor, AuditResource, AuditQueryOpti
  *   - Row-level security scoped to tenant
  */
 export class AuditLog {
+  private readonly locks = new Map<string, Promise<unknown>>();
+
   constructor(private readonly store: AuditStore) {}
+
+  private async withLock<T>(tenantId: string, fn: () => Promise<T>): Promise<T> {
+    const prev = this.locks.get(tenantId) ?? Promise.resolve();
+    const next = prev.then(fn, fn);
+    this.locks.set(tenantId, next);
+    try {
+      return await next;
+    } finally {
+      if (this.locks.get(tenantId) === next) {
+        this.locks.delete(tenantId);
+      }
+    }
+  }
 
   async log(
     action: AuditAction,
@@ -22,25 +37,27 @@ export class AuditLog {
     tenantId: string,
     metadata?: Record<string, unknown>,
   ): Promise<AuditEntry> {
-    const previousHash = await this.store.getLastHash(tenantId);
+    return this.withLock(tenantId, async () => {
+      const previousHash = await this.store.getLastHash(tenantId);
 
-    const entry: Omit<AuditEntry, "hash"> = {
-      id: randomUUID(),
-      timestamp: new Date().toISOString(),
-      action,
-      actor,
-      resource,
-      metadata: sanitizeMetadata(metadata),
-      tenantId,
-      previousHash,
-      dataRegion: process.env["DATA_REGION"] ?? "ca-central-1",
-    };
+      const entry: Omit<AuditEntry, "hash"> = {
+        id: randomUUID(),
+        timestamp: new Date().toISOString(),
+        action,
+        actor,
+        resource,
+        metadata: sanitizeMetadata(metadata),
+        tenantId,
+        previousHash,
+        dataRegion: process.env["DATA_REGION"] ?? "ca-central-1",
+      };
 
-    const hash = computeHash(entry);
-    const fullEntry: AuditEntry = { ...entry, hash };
+      const hash = computeHash(entry);
+      const fullEntry: AuditEntry = { ...entry, hash };
 
-    await this.store.append(fullEntry);
-    return fullEntry;
+      await this.store.append(fullEntry);
+      return fullEntry;
+    });
   }
 
   /** Verify the hash chain integrity for a tenant — detects tampering */
@@ -56,7 +73,8 @@ export class AuditLog {
         broken.push(`Entry ${curr.id}: previousHash mismatch (expected ${prev.hash})`);
       }
 
-      const recomputed = computeHash({ ...curr, hash: "" });
+      const { hash: _hash, ...dataWithoutHash } = curr;
+      const recomputed = computeHash(dataWithoutHash as Omit<AuditEntry, "hash">);
       if (recomputed !== curr.hash) {
         broken.push(`Entry ${curr.id}: hash tampered`);
       }
@@ -72,9 +90,22 @@ export class AuditLog {
 
 // ── Hash computation ──────────────────────────────────────────────────────
 
+function deterministicStringify(obj: unknown): string {
+  return JSON.stringify(obj, (_key, value: unknown) => {
+    if (value !== null && typeof value === "object" && !Array.isArray(value)) {
+      const sorted: Record<string, unknown> = {};
+      for (const k of Object.keys(value as Record<string, unknown>).sort()) {
+        sorted[k] = (value as Record<string, unknown>)[k];
+      }
+      return sorted;
+    }
+    return value;
+  });
+}
+
 function computeHash(entry: Omit<AuditEntry, "hash"> & { hash?: string }): string {
   const { hash: _, ...data } = entry;
-  return createHash("sha256").update(JSON.stringify(data)).digest("hex");
+  return createHash("sha256").update(deterministicStringify(data)).digest("hex");
 }
 
 // ── Metadata sanitization (never store raw PII unless necessary) ──────────

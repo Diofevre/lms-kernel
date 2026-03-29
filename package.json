@@ -1,8 +1,8 @@
 {
-  "name": "lms-kernel",
+  "name": "kern",
   "private": true,
   "version": "0.1.0",
-  "description": "Modular LMS kernel — Next.js monorepo",
+  "description": "Kern — Institutional kernel: multi-tenant, Loi 25, WCAG 2.1 AA",
   "packageManager": "pnpm@9.0.0",
   "scripts": {
     "dev": "turbo run dev",
@@ -14,6 +14,8 @@
     "clean": "turbo run clean && rm -rf node_modules"
   },
   "devDependencies": {
+    "@commitlint/cli": "^19.0.0",
+    "@commitlint/config-conventional": "^19.0.0",
     "turbo": "^2.0.0",
     "typescript": "^5.4.0",
     "prettier": "^3.2.0",

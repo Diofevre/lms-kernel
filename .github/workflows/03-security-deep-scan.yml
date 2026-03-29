@@ -1,12 +1,8 @@
 name: "Stage 3 — Security Deep Scan"
 
 on:
-  push:
-    branches:
-      - develop
-  schedule:
-    # Run full scan every night at 2am UTC regardless of push
-    - cron: "0 2 * * *"
+  workflow_dispatch:
+    # Template — will be activated when staging/production environments are ready
 
 jobs:
   sonarcloud:

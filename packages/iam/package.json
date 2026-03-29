@@ -1,8 +1,8 @@
 {
-  "name": "@lms/iam",
+  "name": "@kern/iam",
   "version": "0.1.0",
   "private": true,
-  "description": "LMS Kernel — Keycloak IAM adapter, RBAC, tenant-aware auth",
+  "description": "Kern — Keycloak IAM adapter, RBAC, tenant-aware auth",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "scripts": {
@@ -13,7 +13,7 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
-    "@lms/core": "workspace:*",
+    "@kern/core": "workspace:*",
     "keycloak-connect": "^24.0.0",
     "jsonwebtoken": "^9.0.0",
     "jwks-rsa": "^3.1.0"

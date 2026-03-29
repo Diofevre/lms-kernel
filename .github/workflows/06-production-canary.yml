@@ -1,8 +1,8 @@
 name: "Stage 6 — Production Canary Deploy"
 
 on:
-  release:
-    types: [published]
+  workflow_dispatch:
+    # Template — will be activated when staging/production environments are ready
 
 jobs:
   canary-5:
@@ -103,7 +103,7 @@ jobs:
         with:
           payload: |
             {
-              "text": "🚨 *LMS Kernel — Auto-rollback triggered*\nRelease: ${{ github.ref_name }}\nReason: Canary deployment failed\nRolled back by: GitHub Actions"
+              "text": "🚨 *Kern — Auto-rollback triggered*\nRelease: ${{ github.ref_name }}\nReason: Canary deployment failed\nRolled back by: GitHub Actions"
             }
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
@@ -120,7 +120,7 @@ jobs:
         with:
           payload: |
             {
-              "text": "✅ *LMS Kernel — Production deployment successful*\nRelease: ${{ github.ref_name }}\nDeployed by: @${{ github.actor }}"
+              "text": "✅ *Kern — Production deployment successful*\nRelease: ${{ github.ref_name }}\nDeployed by: @${{ github.actor }}"
             }
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}

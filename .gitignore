@@ -10,6 +10,9 @@ out/
 build/
 *.tsbuildinfo
 
+# Prisma generated client (regenerated on build)
+packages/db/generated/
+
 # Environment — NEVER commit real secrets
 .env
 .env.local

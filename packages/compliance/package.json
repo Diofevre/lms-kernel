@@ -1,13 +1,13 @@
 {
-  "name": "@lms/compliance",
+  "name": "@kern/compliance",
   "version": "0.1.0",
   "private": true,
-  "description": "LMS Kernel — Loi 25 (Quebec) + WCAG 2.1 AA compliance gates",
+  "description": "Kern — Loi 25 (Quebec) + WCAG 2.1 AA compliance gates",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "bin": {
-    "lms-check-loi25": "./dist/scripts/loi25-check.js",
-    "lms-check-wcag": "./dist/scripts/wcag-check.js"
+    "kern-check-loi25": "./dist/scripts/loi25-check.js",
+    "kern-check-wcag": "./dist/scripts/wcag-check.js"
   },
   "scripts": {
     "build": "tsc -p tsconfig.json",
@@ -19,7 +19,7 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
-    "@lms/core": "workspace:*"
+    "@kern/core": "workspace:*"
   },
   "devDependencies": {
     "typescript": "^5.4.0",

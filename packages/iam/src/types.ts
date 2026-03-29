@@ -1,19 +1,20 @@
 /**
- * @lms/iam — Identity & Access Management types
+ * @kern/iam — Identity & Access Management types
  *
  * Auth flow: Client → API → Keycloak OIDC token validation → Guard → Handler
  * Multi-tenant: tenant slug extracted from subdomain → injected into request context
  */
 
-/** Roles hierarchy — coarse-grained, Keycloak manages fine-grained permissions */
+/** Core kernel roles — apps extend these with AppRole<T> */
 export type KernelRole =
   | "super_admin"        // Platform-level (our team only)
   | "tenant_admin"       // Organisation administrator
-  | "instructor"         // Course instructor / trainer
-  | "student"            // Learner
-  | "proctor"            // Exam supervisor (télésurveillance)
+  | "user"               // Standard user
   | "auditor"            // Read-only audit log access
   | "privacy_officer";   // RPP — Responsable protection renseignements personnels
+
+/** Extend with app-specific roles: type MyRoles = AppRole<"instructor" | "student"> */
+export type AppRole<T extends string = never> = KernelRole | T;
 
 /** Decoded JWT payload from Keycloak */
 export interface KeycloakTokenPayload {

@@ -1,8 +1,8 @@
 {
-  "name": "LMS Kernel — Dev Container",
+  "name": "Kern — Dev Container",
   "dockerComposeFile": "docker-compose.yml",
   "service": "app",
-  "workspaceFolder": "/workspaces/lms-kernel",
+  "workspaceFolder": "/workspaces/kern",
 
   "features": {
     "ghcr.io/devcontainers/features/node:1": { "version": "22" },
@@ -10,7 +10,7 @@
   },
 
   "onCreateCommand": "npm install -g pnpm@9 && pnpm install",
-  "postCreateCommand": "cp .env.codespace .env && pnpm run build --filter=@lms/core --filter=@lms/audit --filter=@lms/compliance && echo '✅ LMS Kernel ready — PostgreSQL, Redis, Keycloak are running'",
+  "postCreateCommand": "cp .env.codespace .env && pnpm run build --filter=@kern/core --filter=@kern/audit --filter=@kern/compliance && echo '✅ Kern ready — PostgreSQL, Redis, Keycloak are running'",
 
   "customizations": {
     "vscode": {

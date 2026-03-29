@@ -1,0 +1,10 @@
+{
+  "defaults": {
+    "standard": "WCAG2AA",
+    "runners": ["axe"],
+    "timeout": 30000
+  },
+  "urls": [
+    "http://localhost:3000"
+  ]
+}

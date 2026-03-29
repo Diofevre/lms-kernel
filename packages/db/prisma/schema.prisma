@@ -1,0 +1,148 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Tenant {
+  id             String   @id @default(uuid())
+  slug           String   @unique  // subdomain: "universite-montreal"
+  name           String
+  isActive       Boolean  @default(true)
+  keycloakRealm  String?
+  keycloakClientId String?
+  config         Json     @default("{}")
+  enabledModules String[] @default([])
+  primaryColor   String   @default("#0f172a")
+  logoUrl        String?
+
+  // SSO configuration per tenant
+  enabledSsoProviders String[] @default(["credentials"])  // "credentials", "google", "microsoft", "apple"
+
+  // Quotas
+  maxUsers         Int      @default(0)     // 0 = unlimited
+  maxStorageBytes  BigInt   @default(0)     // 0 = unlimited
+
+  // Custom domain support
+  customDomain     String?  @unique         // e.g. "files.universite-montreal.ca"
+
+  // MFA configuration
+  mfaRequired      Boolean  @default(false) // Force MFA for all users of this tenant
+
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  deletedAt      DateTime?
+
+  users               TenantUser[]
+  auditLogs           AuditLog[]
+  consents            ConsentRecord[]
+  dataSubjectRequests DataSubjectRequest[]
+  storageObjects      StorageObject[]
+
+  @@map("tenants")
+}
+
+model TenantUser {
+  id         String   @id @default(uuid())
+  tenantId   String
+  tenant     Tenant   @relation(fields: [tenantId], references: [id])
+  keycloakId String
+  email      String
+  username   String
+  firstName  String   @default("")
+  lastName   String   @default("")
+  roles      String[] @default(["user"])
+  isActive   Boolean  @default(true)
+  lastLoginAt DateTime?
+  mfaEnabled   Boolean  @default(false)
+  mfaSecret    String?   // TOTP secret (encrypted)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  deletedAt  DateTime?
+
+  @@unique([tenantId, keycloakId])
+  @@unique([tenantId, email])
+  @@index([tenantId])
+  @@map("tenant_users")
+}
+
+model AuditLog {
+  id           String   @id @default(uuid())
+  tenantId     String
+  tenant       Tenant   @relation(fields: [tenantId], references: [id])
+  action       String
+  actorId      String
+  actorType    String
+  actorIpHash  String?
+  resourceType String
+  resourceId   String
+  resourceLabel String?
+  metadata     Json?
+  previousHash String   @default("")
+  hash         String
+  dataRegion   String   @default("ca-central-1")
+  createdAt    DateTime @default(now())
+
+  @@index([tenantId, createdAt])
+  @@index([tenantId, action])
+  @@index([tenantId, actorId])
+  @@map("audit_logs")
+}
+
+model ConsentRecord {
+  id          String    @id @default(uuid())
+  tenantId    String
+  tenant      Tenant    @relation(fields: [tenantId], references: [id])
+  userId      String
+  categories  String[]
+  purpose     String
+  method      String
+  ipHash      String
+  givenAt     DateTime  @default(now())
+  expiresAt   DateTime?
+  withdrawnAt DateTime?
+
+  @@index([tenantId, userId])
+  @@map("consent_records")
+}
+
+model DataSubjectRequest {
+  id          String    @id @default(uuid())
+  tenantId    String
+  tenant      Tenant    @relation(fields: [tenantId], references: [id])
+  userId      String
+  type        String
+  status      String    @default("pending")
+  requestedAt DateTime  @default(now())
+  deadline    DateTime
+  completedAt DateTime?
+  denialReason String?
+
+  @@index([tenantId, userId])
+  @@index([tenantId, status])
+  @@map("data_subject_requests")
+}
+
+model StorageObject {
+  id         String    @id @default(uuid())
+  tenantId   String
+  tenant     Tenant    @relation(fields: [tenantId], references: [id])
+  key        String
+  bucket     String
+  filename   String
+  mimeType   String
+  sizeBytes  BigInt
+  uploadedBy String
+  isPublic   Boolean   @default(false)
+  metadata   Json?
+  createdAt  DateTime  @default(now())
+  deletedAt  DateTime?
+
+  @@unique([tenantId, key])
+  @@index([tenantId])
+  @@map("storage_objects")
+}

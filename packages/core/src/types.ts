@@ -1,7 +1,7 @@
 /**
- * @lms/core — Kernel types
+ * @kern/core — Kernel types
  *
- * Every module in the LMS kernel MUST implement KernelModule.
+ * Every module in the kernel MUST implement KernelModule.
  * This is the single source of truth for the module contract.
  */
 
