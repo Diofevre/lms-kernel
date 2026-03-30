@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useSession } from "next-auth/react";
+import { useTranslations } from "next-intl";
 import { Clock, AlertTriangle, CheckCircle2, Lock, Loader2 } from "lucide-react";
 import { apiGet, apiPatch } from "@/lib/api";
 
@@ -60,6 +61,8 @@ export default function PrivacyPage() {
   const [loading, setLoading] = useState(true);
   const [processingId, setProcessingId] = useState<string | null>(null);
 
+  const t = useTranslations("privacy");
+  const tc = useTranslations("common");
   const token = (session as unknown as Record<string, unknown> | null)?.accessToken as string | undefined;
 
   const fetchRequests = useCallback(async () => {
@@ -114,10 +117,10 @@ export default function PrivacyPage() {
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-semibold text-gray-900 tracking-tight">
-          Confidentialité — Loi 25
+          {t("title")}
         </h1>
         <p className="mt-1 text-sm text-gray-500">
-          Gestion des demandes de droits et des consentements.
+          {t("subtitle")}
         </p>
       </div>
 

@@ -2,11 +2,14 @@
 
 import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
+import { useTranslations } from "next-intl";
 import { User, ShieldAlert, Globe, Trash2, Check, Loader2 } from "lucide-react";
 import { apiPost, apiDelete } from "@/lib/api";
+import { LanguageSwitcher } from "@/components/common/language-switcher";
 
 export default function SettingsPage() {
   const { data: session } = useSession();
+  const t = useTranslations("settings");
 
   // Profile
   const [firstName, setFirstName] = useState("");
@@ -100,8 +103,8 @@ export default function SettingsPage() {
   return (
     <div className="space-y-8 max-w-2xl">
       <div>
-        <h1 className="text-2xl font-semibold text-gray-900 tracking-tight">Paramètres</h1>
-        <p className="mt-1 text-sm text-gray-500">Gérez votre profil, votre sécurité et vos préférences.</p>
+        <h1 className="text-2xl font-semibold text-gray-900 tracking-tight">{t("title")}</h1>
+        <p className="mt-1 text-sm text-gray-500">{t("subtitle")}</p>
       </div>
 
       {/* Global feedback */}
@@ -189,16 +192,12 @@ export default function SettingsPage() {
       <section className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm" aria-labelledby="section-preferences">
         <div className="flex items-center gap-3 mb-6">
           <Globe className="h-5 w-5 text-gray-400" />
-          <h2 id="section-preferences" className="text-lg font-semibold text-gray-900">Préférences</h2>
+          <h2 id="section-preferences" className="text-lg font-semibold text-gray-900">{t("preferences")}</h2>
         </div>
         <div className="space-y-4">
           <div>
-            <label htmlFor="settings-language" className="block text-sm font-medium text-gray-700 mb-1">Langue</label>
-            <select id="settings-language" value={language} onChange={(e) => setLanguage(e.target.value)}
-              className="w-full rounded-md border border-gray-200 bg-white px-3 py-2 text-sm focus:border-gray-400 focus:outline-none focus:ring-1 focus:ring-gray-400">
-              <option value="fr">Français</option>
-              <option value="en">English</option>
-            </select>
+            <label className="block text-sm font-medium text-gray-700 mb-2">{t("language")}</label>
+            <LanguageSwitcher />
           </div>
           <div>
             <label htmlFor="settings-theme" className="block text-sm font-medium text-gray-700 mb-1">Thème</label>

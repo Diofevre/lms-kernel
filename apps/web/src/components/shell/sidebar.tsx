@@ -16,6 +16,7 @@ import {
   LogOut,
   Menu,
   X,
+  LifeBuoy,
 } from "lucide-react";
 
 interface NavItem {
@@ -26,6 +27,7 @@ interface NavItem {
 
 const navItems: NavItem[] = [
   { labelKey: "dashboard", href: "/dashboard", icon: LayoutDashboard },
+  { labelKey: "support", href: "/support", icon: LifeBuoy },
   { labelKey: "users", href: "/admin/users", icon: Users },
   { labelKey: "organizations", href: "/admin/tenants", icon: Building2 },
   { labelKey: "audit", href: "/admin/audit", icon: Shield },

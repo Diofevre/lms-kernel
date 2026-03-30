@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useSession } from "next-auth/react";
+import { useTranslations } from "next-intl";
 import { Search, UserPlus, MoreHorizontal, Users, Loader2 } from "lucide-react";
 import { apiGet, apiPatch } from "@/lib/api";
 
@@ -47,6 +48,8 @@ const statusClasses: Record<UserStatus, string> = {
 
 export default function UsersPage() {
   const { data: session } = useSession();
+  const t = useTranslations("users");
+  const tc = useTranslations("common");
   const [search, setSearch] = useState("");
   const [roleFilter, setRoleFilter] = useState("all");
   const [users, setUsers] = useState<AppUser[]>([]);
@@ -109,10 +112,10 @@ export default function UsersPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-semibold text-gray-900 tracking-tight">
-            Utilisateurs
+            {t("title")}
           </h1>
           <p className="mt-1 text-sm text-gray-500">
-            Gestion des utilisateurs et de leurs roles.
+            {t("subtitle")}
           </p>
         </div>
         <button
@@ -120,7 +123,7 @@ export default function UsersPage() {
           className="inline-flex items-center gap-2 rounded-md bg-gray-900 px-4 py-2.5 text-sm font-medium text-white hover:bg-gray-800 transition-colors"
         >
           <UserPlus className="h-4 w-4" />
-          Inviter un utilisateur
+          {t("invite")}
         </button>
       </div>
 
@@ -201,10 +204,10 @@ export default function UsersPage() {
                 <td colSpan={6} className="px-4 py-12 text-center">
                   <Users className="mx-auto h-10 w-10 text-gray-300" />
                   <p className="mt-2 text-sm font-medium text-gray-900">
-                    Aucun utilisateur trouvé
+                    {t("noUsers")}
                   </p>
                   <p className="mt-1 text-sm text-gray-500">
-                    Les utilisateurs apparaîtront ici une fois invités.
+                    {t("noUsersHint")}
                   </p>
                 </td>
               </tr>

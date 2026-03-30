@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useSession } from "next-auth/react";
+import { useTranslations } from "next-intl";
 import {
   Search,
   Download,
@@ -38,6 +39,8 @@ const actionTypes = [
 
 export default function AuditPage() {
   const { data: session } = useSession();
+  const t = useTranslations("audit");
+  const tc = useTranslations("common");
   const [search, setSearch] = useState("");
   const [actionFilter, setActionFilter] = useState("all");
   const [dateFrom, setDateFrom] = useState("");
@@ -99,10 +102,10 @@ export default function AuditPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-semibold text-gray-900 tracking-tight">
-            Journal d&apos;audit
+            {t("title")}
           </h1>
           <p className="mt-1 text-sm text-gray-500">
-            Historique immutable des actions dans le systeme.
+            {t("subtitle")}
           </p>
         </div>
         <div className="flex items-center gap-2">
