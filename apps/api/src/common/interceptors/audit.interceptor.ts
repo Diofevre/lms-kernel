@@ -7,9 +7,9 @@ import {
   Optional,
 } from "@nestjs/common";
 import { Observable, tap } from "rxjs";
-import { createHash, randomUUID } from "crypto";
+import { createHash } from "crypto";
 import type { FastifyRequest } from "fastify";
-import { PrismaService } from "../../prisma/prisma.service.js";
+import { AuditLogService } from "../../modules/audit/audit-log.service.js";
 
 interface AuditableRequest extends FastifyRequest {
   tenantId?: string;
@@ -18,12 +18,12 @@ interface AuditableRequest extends FastifyRequest {
 
 /**
  * AuditInterceptor — logs every mutating API call to the immutable audit log.
- * Writes directly to the audit_logs table with SHA-256 hash chaining.
+ * Delegates to AuditLogService (not PrismaService directly) to avoid DI scope issues.
  */
 @Injectable()
 export class AuditInterceptor implements NestInterceptor {
   constructor(
-    @Optional() @Inject(PrismaService) private readonly prisma?: PrismaService,
+    @Optional() @Inject(AuditLogService) private readonly auditLog?: AuditLogService,
   ) {}
 
   intercept(context: ExecutionContext, next: CallHandler): Observable<unknown> {
@@ -56,51 +56,30 @@ export class AuditInterceptor implements NestInterceptor {
     try {
       const tenantId = request.tenantId ?? request.user?.tenantId ?? "unknown";
       const userId = request.user?.id ?? "anonymous";
-      const action = `api.${request.method.toLowerCase()}.${request.url.split("?")[0]?.replace(/\//g, ".").replace(/^\./, "")}`;
+      const path = request.url.split("?")[0] ?? "/";
+      const action = `api.${request.method.toLowerCase()}.${path.replace(/\//g, ".").replace(/^\./, "")}`;
 
-      if (!this.prisma) {
+      if (!this.auditLog) {
         if (process.env["NODE_ENV"] === "development") {
           console.log("[AUDIT]", JSON.stringify({ action, userId, tenantId, outcome, durationMs }));
         }
         return;
       }
 
-      // Get last hash for chain
-      const last = await this.prisma.auditLog.findFirst({
-        where: { tenantId },
-        orderBy: { createdAt: "desc" },
-        select: { hash: true },
-      });
-      const previousHash = last?.hash ?? "";
-
-      const entry = {
-        id: randomUUID(),
+      await this.auditLog.saveEntry({
         tenantId,
         action,
         actorId: userId,
-        actorType: "user",
         actorIpHash: request.ip ? createHash("sha256").update(request.ip).digest("hex") : null,
-        resourceType: "api",
-        resourceId: request.url.split("?")[0] ?? "/",
+        resourceId: path,
         metadata: {
           method: request.method,
           outcome,
           durationMs,
           ...(error ? { error: String(error) } : {}),
         },
-        previousHash,
-        dataRegion: process.env["DATA_REGION"] ?? "ca-central-1",
-      };
-
-      // Deterministic hash (sorted keys)
-      const hashInput = JSON.stringify(entry, Object.keys(entry).sort());
-      const hash = createHash("sha256").update(hashInput).digest("hex");
-
-      await this.prisma.auditLog.create({
-        data: { ...entry, hash },
       });
     } catch (err) {
-      // Audit failure must never crash the request
       console.error("[AUDIT ERROR]", err);
     }
   }

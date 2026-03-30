@@ -1,0 +1,23 @@
+{
+  "name": "@kern/email",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Kern — Transactional email via Nodemailer (SMTP)",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "lint": "eslint src --ext .ts",
+    "test": "vitest run",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "nodemailer": "^6.9.0"
+  },
+  "devDependencies": {
+    "@types/nodemailer": "^6.4.0",
+    "typescript": "^5.4.0",
+    "vitest": "^1.0.0"
+  }
+}
