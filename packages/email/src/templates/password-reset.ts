@@ -1,10 +1,10 @@
 import type { EmailData, EmailLocale } from "../types.js";
-import { wrapLayout } from "./_layout.js";
+import { wrapLayout, ctaButton } from "./_layout.js";
 
 const subjects: Record<EmailLocale, string> = {
-  fr: "Réinitialisation de votre mot de passe",
+  fr: "R\u00e9initialisez votre mot de passe",
   en: "Reset your password",
-  es: "Restablecer su contraseña",
+  es: "Restablezca su contrase\u00f1a",
 };
 
 export function subject(data: EmailData): string {
@@ -13,30 +13,33 @@ export function subject(data: EmailData): string {
 
 export function html(data: EmailData): string {
   const locale = data.locale ?? "fr";
-  const name = data.firstName ?? "";
+  const firstName = data.firstName ?? "";
   const color = data.tenant?.primaryColor ?? "#0f172a";
   const url = (data["resetUrl"] as string) ?? "#";
+  const greeting = firstName ? ` ${firstName}` : "";
 
-  const content: Record<EmailLocale, string> = {
-    fr: `<p>Bonjour${name ? ` ${name}` : ""},</p>
-      <p>Cliquez sur le bouton ci-dessous pour r&eacute;initialiser votre mot de passe.</p>
-      <p style="text-align:center;margin:24px 0;">
-        <a href="${url}" style="display:inline-block;padding:12px 28px;background:${color};color:#fff;text-decoration:none;border-radius:6px;font-weight:600;">R&eacute;initialiser</a>
-      </p>
-      <p>Ce lien expire dans 60 minutes.</p>`,
-    en: `<p>Hello${name ? ` ${name}` : ""},</p>
-      <p>Click the button below to reset your password.</p>
-      <p style="text-align:center;margin:24px 0;">
-        <a href="${url}" style="display:inline-block;padding:12px 28px;background:${color};color:#fff;text-decoration:none;border-radius:6px;font-weight:600;">Reset password</a>
-      </p>
-      <p>This link expires in 60 minutes.</p>`,
-    es: `<p>Hola${name ? ` ${name}` : ""},</p>
-      <p>Haga clic en el bot&oacute;n a continuaci&oacute;n para restablecer su contrase&ntilde;a.</p>
-      <p style="text-align:center;margin:24px 0;">
-        <a href="${url}" style="display:inline-block;padding:12px 28px;background:${color};color:#fff;text-decoration:none;border-radius:6px;font-weight:600;">Restablecer</a>
-      </p>
-      <p>Este enlace expira en 60 minutos.</p>`,
+  const bodies: Record<EmailLocale, string> = {
+    fr: `<h1 style="font-size:22px;font-weight:700;color:#18181b;margin:0 0 16px 0;">R&eacute;initialisation du mot de passe</h1>
+<p style="margin:0 0 12px 0;">Bonjour${greeting},</p>
+<p style="margin:0 0 12px 0;">Nous avons re&ccedil;u une demande de r&eacute;initialisation de votre mot de passe. Cliquez sur le bouton ci-dessous pour en choisir un nouveau.</p>
+${ctaButton("R\u00e9initialiser mon mot de passe", url, color)}
+<p style="margin:0 0 8px 0;font-size:13px;color:#71717a;">Ce lien expire dans <strong>60 minutes</strong>.</p>
+<p style="margin:0;font-size:13px;color:#71717a;">Si vous n&rsquo;avez pas fait cette demande, ignorez ce courriel. Votre mot de passe ne sera pas modifi&eacute;.</p>`,
+
+    en: `<h1 style="font-size:22px;font-weight:700;color:#18181b;margin:0 0 16px 0;">Password Reset</h1>
+<p style="margin:0 0 12px 0;">Hello${greeting},</p>
+<p style="margin:0 0 12px 0;">We received a request to reset your password. Click the button below to choose a new one.</p>
+${ctaButton("Reset my password", url, color)}
+<p style="margin:0 0 8px 0;font-size:13px;color:#71717a;">This link expires in <strong>60 minutes</strong>.</p>
+<p style="margin:0;font-size:13px;color:#71717a;">If you didn&rsquo;t request this, ignore this email. Your password won&rsquo;t change.</p>`,
+
+    es: `<h1 style="font-size:22px;font-weight:700;color:#18181b;margin:0 0 16px 0;">Restablecer contrase&ntilde;a</h1>
+<p style="margin:0 0 12px 0;">Hola${greeting},</p>
+<p style="margin:0 0 12px 0;">Recibimos una solicitud para restablecer su contrase&ntilde;a. Haga clic en el bot&oacute;n a continuaci&oacute;n.</p>
+${ctaButton("Restablecer mi contrase\u00f1a", url, color)}
+<p style="margin:0 0 8px 0;font-size:13px;color:#71717a;">Este enlace expira en <strong>60 minutos</strong>.</p>
+<p style="margin:0;font-size:13px;color:#71717a;">Si no solicit&oacute; esto, ignore este correo.</p>`,
   };
 
-  return wrapLayout(content[locale], data.tenant);
+  return wrapLayout(bodies[locale], data.tenant);
 }

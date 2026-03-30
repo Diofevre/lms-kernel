@@ -1,40 +1,41 @@
 import type { EmailData, EmailLocale } from "../types.js";
-import { wrapLayout } from "./_layout.js";
+import { wrapLayout, ctaButton } from "./_layout.js";
 
 const subjects: Record<EmailLocale, string> = {
-  fr: "Bienvenue sur {tenantName}",
-  en: "Welcome to {tenantName}",
-  es: "Bienvenido a {tenantName}",
+  fr: "Bienvenue sur {name}",
+  en: "Welcome to {name}",
+  es: "Bienvenido a {name}",
 };
 
 export function subject(data: EmailData): string {
   const locale = data.locale ?? "fr";
-  return subjects[locale].replace("{tenantName}", data.tenant?.name ?? "Kern");
+  return subjects[locale].replace("{name}", data.tenant?.name ?? "Kern");
 }
 
 export function html(data: EmailData): string {
   const locale = data.locale ?? "fr";
-  const name = data.firstName ?? "";
+  const firstName = data.firstName ?? "";
   const color = data.tenant?.primaryColor ?? "#0f172a";
   const url = (data["loginUrl"] as string) ?? "#";
 
-  const content: Record<EmailLocale, string> = {
-    fr: `<p>Bonjour${name ? ` ${name}` : ""},</p>
-      <p>Votre compte a &eacute;t&eacute; cr&eacute;&eacute; avec succ&egrave;s.</p>
-      <p style="text-align:center;margin:24px 0;">
-        <a href="${url}" style="display:inline-block;padding:12px 28px;background:${color};color:#fff;text-decoration:none;border-radius:6px;font-weight:600;">Se connecter</a>
-      </p>`,
-    en: `<p>Hello${name ? ` ${name}` : ""},</p>
-      <p>Your account has been created successfully.</p>
-      <p style="text-align:center;margin:24px 0;">
-        <a href="${url}" style="display:inline-block;padding:12px 28px;background:${color};color:#fff;text-decoration:none;border-radius:6px;font-weight:600;">Sign in</a>
-      </p>`,
-    es: `<p>Hola${name ? ` ${name}` : ""},</p>
-      <p>Su cuenta ha sido creada exitosamente.</p>
-      <p style="text-align:center;margin:24px 0;">
-        <a href="${url}" style="display:inline-block;padding:12px 28px;background:${color};color:#fff;text-decoration:none;border-radius:6px;font-weight:600;">Iniciar sesi&oacute;n</a>
-      </p>`,
+  const greeting = firstName ? ` ${firstName}` : "";
+
+  const bodies: Record<EmailLocale, string> = {
+    fr: `<h1 style="font-size:22px;font-weight:700;color:#18181b;margin:0 0 16px 0;">Bienvenue${greeting} !</h1>
+<p style="margin:0 0 12px 0;">Votre compte a &eacute;t&eacute; cr&eacute;&eacute; avec succ&egrave;s. Vous pouvez d&egrave;s maintenant vous connecter et acc&eacute;der &agrave; votre espace.</p>
+${ctaButton("Se connecter", url, color)}
+<p style="margin:0;font-size:13px;color:#71717a;">Si vous n&rsquo;avez pas demand&eacute; la cr&eacute;ation de ce compte, ignorez simplement ce courriel.</p>`,
+
+    en: `<h1 style="font-size:22px;font-weight:700;color:#18181b;margin:0 0 16px 0;">Welcome${greeting}!</h1>
+<p style="margin:0 0 12px 0;">Your account has been created successfully. You can now sign in and access your workspace.</p>
+${ctaButton("Sign in", url, color)}
+<p style="margin:0;font-size:13px;color:#71717a;">If you did not request this account, you can safely ignore this email.</p>`,
+
+    es: `<h1 style="font-size:22px;font-weight:700;color:#18181b;margin:0 0 16px 0;">&iexcl;Bienvenido${greeting}!</h1>
+<p style="margin:0 0 12px 0;">Su cuenta ha sido creada exitosamente. Ya puede iniciar sesi&oacute;n y acceder a su espacio.</p>
+${ctaButton("Iniciar sesi\u00f3n", url, color)}
+<p style="margin:0;font-size:13px;color:#71717a;">Si no solicit&oacute; esta cuenta, ignore este correo.</p>`,
   };
 
-  return wrapLayout(content[locale], data.tenant);
+  return wrapLayout(bodies[locale], data.tenant);
 }
