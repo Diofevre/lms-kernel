@@ -80,23 +80,28 @@ export default function PrivacyPage() {
 
   useEffect(() => { void fetchRequests(); }, [fetchRequests]);
 
-  const handleProcess = async (id: string, action: "complete" | "deny") => {
+  // Denial modal state
+  const [denyModalId, setDenyModalId] = useState<string | null>(null);
+  const [denyReason, setDenyReason] = useState("");
+
+  const handleApprove = async (id: string) => {
     if (!token) return;
     setProcessingId(id);
     try {
-      const body: Record<string, string> = { action };
-      if (action === "deny") {
-        const reason = prompt("Raison du refus :");
-        if (!reason) { setProcessingId(null); return; }
-        body["denialReason"] = reason;
-      }
-      await apiPatch(`/v1/privacy/requests/${id}`, body, token);
+      await apiPatch(`/v1/privacy/requests/${id}`, { action: "complete" }, token);
       await fetchRequests();
-    } catch {
-      // Error handled by API client
-    } finally {
-      setProcessingId(null);
-    }
+    } catch { /* API client handles */ } finally { setProcessingId(null); }
+  };
+
+  const handleDenySubmit = async () => {
+    if (!token || !denyModalId || !denyReason.trim()) return;
+    setProcessingId(denyModalId);
+    try {
+      await apiPatch(`/v1/privacy/requests/${denyModalId}`, { action: "deny", denialReason: denyReason.trim() }, token);
+      setDenyModalId(null);
+      setDenyReason("");
+      await fetchRequests();
+    } catch { /* API client handles */ } finally { setProcessingId(null); }
   };
 
   // Computed stats
@@ -214,14 +219,14 @@ export default function PrivacyPage() {
                         {req.status === "pending" && (
                           <div className="flex items-center justify-end gap-2">
                             <button type="button" disabled={processingId === req.id}
-                              onClick={() => handleProcess(req.id, "complete")}
+                              onClick={() => handleApprove(req.id)}
                               className="rounded-md bg-emerald-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-emerald-700 transition-colors disabled:opacity-50">
-                              {processingId === req.id ? "..." : "Approuver"}
+                              {processingId === req.id ? "..." : t("approve")}
                             </button>
                             <button type="button" disabled={processingId === req.id}
-                              onClick={() => handleProcess(req.id, "deny")}
+                              onClick={() => { setDenyModalId(req.id); setDenyReason(""); }}
                               className="rounded-md border border-gray-200 px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-50">
-                              Refuser
+                              {t("deny")}
                             </button>
                           </div>
                         )}
@@ -242,6 +247,33 @@ export default function PrivacyPage() {
             <Lock className="mx-auto h-10 w-10 text-gray-300" />
             <p className="mt-3 text-sm font-medium text-gray-900">Fonctionnalité à venir</p>
             <p className="mt-1 text-sm text-gray-500">La gestion des consentements sera disponible prochainement.</p>
+          </div>
+        </div>
+      )}
+      {/* Denial reason modal */}
+      {denyModalId && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" role="dialog" aria-modal="true" aria-label={t("deny")}>
+          <div className="w-full max-w-md rounded-lg bg-white p-6 shadow-xl">
+            <h3 className="text-lg font-semibold text-gray-900">{t("deny")}</h3>
+            <p className="mt-1 text-sm text-gray-500">{t("denyReason")}</p>
+            <textarea
+              value={denyReason}
+              onChange={(e) => setDenyReason(e.target.value)}
+              rows={3}
+              className="mt-3 w-full rounded-md border border-gray-200 px-3 py-2 text-sm focus:border-gray-400 focus:outline-none focus:ring-1 focus:ring-gray-400"
+              placeholder={t("denyReason")}
+              autoFocus
+            />
+            <div className="mt-4 flex justify-end gap-3">
+              <button type="button" onClick={() => { setDenyModalId(null); setDenyReason(""); }}
+                className="rounded-md border border-gray-200 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
+                {tc("cancel")}
+              </button>
+              <button type="button" onClick={handleDenySubmit} disabled={!denyReason.trim() || processingId === denyModalId}
+                className="rounded-md bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50">
+                {tc("confirm")}
+              </button>
+            </div>
           </div>
         </div>
       )}

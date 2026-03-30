@@ -54,7 +54,6 @@ export class PrivacyController {
       req.user.id,
       tenantId,
       "correction",
-      { description: dto.description, field: dto.field, expectedValue: dto.expectedValue },
     );
     return {
       message: "Correction request registered. It will be processed within 30 days per Loi 25.",

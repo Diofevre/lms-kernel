@@ -108,6 +108,7 @@ model ConsentRecord {
   withdrawnAt DateTime?
 
   @@index([tenantId, userId])
+  @@index([tenantId, userId, withdrawnAt])
   @@map("consent_records")
 }
 
@@ -125,6 +126,7 @@ model DataSubjectRequest {
 
   @@index([tenantId, userId])
   @@index([tenantId, status])
+  @@index([tenantId, userId, status])
   @@map("data_subject_requests")
 }
 
@@ -168,5 +170,6 @@ model SupportTicket {
 
   @@index([tenantId])
   @@index([tenantId, status])
+  @@index([tenantId, userId, status])
   @@map("support_tickets")
 }

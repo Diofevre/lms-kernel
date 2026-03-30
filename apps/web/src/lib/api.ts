@@ -39,14 +39,12 @@ async function handleResponse<T>(res: Response): Promise<T> {
   }
 
   // Handle empty responses (204 No Content, etc.)
-  const text = await res.text();
-  if (!text) return undefined as T;
-
-  try {
-    return JSON.parse(text) as T;
-  } catch {
-    return text as unknown as T;
+  const contentType = res.headers.get("content-type") ?? "";
+  if (res.status === 204 || !contentType.includes("application/json")) {
+    return undefined as T;
   }
+
+  return res.json() as Promise<T>;
 }
 
 export async function apiGet<T>(path: string, token?: string): Promise<T> {

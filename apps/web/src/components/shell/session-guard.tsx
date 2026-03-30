@@ -13,7 +13,7 @@ import { usePathname } from "next/navigation";
  *  3. Polls session every 60 seconds to catch server-side session invalidation
  *  4. Shows nothing until session is confirmed (prevents flash of authenticated content)
  */
-const SESSION_POLL_INTERVAL_S = 60;
+const SESSION_POLL_INTERVAL_S = 30;
 
 export function SessionGuard({ children }: { children: React.ReactNode }) {
   const { data: session, status } = useSession({

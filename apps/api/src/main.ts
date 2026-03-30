@@ -1,7 +1,7 @@
 import "reflect-metadata";
 import { NestFactory } from "@nestjs/core";
 import { FastifyAdapter, NestFastifyApplication } from "@nestjs/platform-fastify";
-import { ValidationPipe, VersioningType } from "@nestjs/common";
+import { ValidationPipe, VersioningType, Logger } from "@nestjs/common";
 import { SwaggerModule, DocumentBuilder } from "@nestjs/swagger";
 import { AppModule } from "./app.module.js";
 
@@ -58,8 +58,10 @@ async function bootstrap() {
 
   const port = parseInt(process.env["PORT"] ?? "4000", 10);
   await app.listen(port, "0.0.0.0");
-  console.log(`Kern API running on port ${port}`);
-  console.log(`Swagger docs: http://localhost:${port}/api/docs`);
+
+  const logger = app.get(Logger);
+  logger.log(`Kern API running on port ${port}`, "Bootstrap");
+  logger.log(`Swagger docs: http://localhost:${port}/api/docs`, "Bootstrap");
 }
 
 bootstrap().catch(console.error);

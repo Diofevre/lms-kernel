@@ -2,6 +2,7 @@ import { Controller, Get, Post, Patch, Param, Body, Query, Req, UseGuards, Parse
 import { ApiBearerAuth, ApiOperation, ApiTags } from "@nestjs/swagger";
 import { AuthGuard, Roles } from "../auth/auth.guard.js";
 import { SupportService } from "./support.service.js";
+import { CreateTicketDto, UpdateTicketStatusDto } from "./support.dto.js";
 import type { FastifyRequest } from "fastify";
 import type { AuthenticatedUser } from "@kern/iam";
 
@@ -19,9 +20,9 @@ export class SupportController {
 
   @Post("tickets")
   @ApiOperation({ summary: "Create a support ticket" })
-  async create(@Req() req: AuthenticatedRequest, @Body() body: { subject: string; description: string; priority?: string }) {
+  async create(@Req() req: AuthenticatedRequest, @Body() dto: CreateTicketDto) {
     const tenantId = req.tenantId ?? req.user.tenantId;
-    return this.supportService.create(body, req.user.id, tenantId);
+    return this.supportService.create(dto, req.user.id, tenantId);
   }
 
   @Get("tickets/mine")
@@ -45,7 +46,7 @@ export class SupportController {
   @Patch("tickets/:id/status")
   @Roles("tenant_admin", "super_admin")
   @ApiOperation({ summary: "Update ticket status (admin)" })
-  async updateStatus(@Param("id", ParseUUIDPipe) id: string, @Body() body: { status: string }) {
-    return this.supportService.updateStatus(id, body.status);
+  async updateStatus(@Param("id", ParseUUIDPipe) id: string, @Body() dto: UpdateTicketStatusDto) {
+    return this.supportService.updateStatus(id, dto.status);
   }
 }
