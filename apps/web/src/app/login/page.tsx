@@ -1,30 +1,33 @@
 import { Suspense } from "react";
 import { ShieldCheck } from "lucide-react";
+import { getTranslations } from "next-intl/server";
 import { LoginForm } from "@/components/auth/login-form";
+import { LanguageSwitcher } from "@/components/common/language-switcher";
 
 export const metadata = {
   title: "Connexion — Kern",
-  description: "Connectez-vous à votre compte Kern.",
 };
 
-export default function LoginPage() {
+export default async function LoginPage() {
+  const t = await getTranslations("auth");
+
   return (
     <div className="w-full max-w-[420px]">
       {/* Security badge */}
       <div className="mb-6 flex items-center gap-2">
         <ShieldCheck className="h-4 w-4 text-emerald-500" />
         <span className="text-xs font-medium uppercase tracking-widest text-emerald-600">
-          Connexion sécurisée
+          {t("secureConnection")}
         </span>
       </div>
 
       {/* Heading */}
       <div className="mb-8">
         <h1 className="text-[28px] font-semibold tracking-tight text-gray-900">
-          Connexion
+          {t("signIn")}
         </h1>
         <p className="mt-2 text-sm text-gray-500">
-          Entrez vos identifiants pour accéder à votre espace
+          {t("signInSubtitle")}
         </p>
       </div>
 
@@ -38,16 +41,19 @@ export default function LoginPage() {
         <LoginForm />
       </Suspense>
 
-      {/* Footer */}
-      <p className="mt-8 text-center text-xs text-gray-400">
-        <a href="/terms" className="hover:text-gray-600 hover:underline">
-          Conditions d&apos;utilisation
-        </a>
-        {" \u2022 "}
-        <a href="/privacy" className="hover:text-gray-600 hover:underline">
-          Politique de confidentialité
-        </a>
-      </p>
+      {/* Footer with language switcher */}
+      <div className="mt-8 flex flex-col items-center gap-4">
+        <LanguageSwitcher />
+        <p className="text-center text-xs text-gray-400">
+          <a href="/terms" className="hover:text-gray-600 hover:underline">
+            {t("terms")}
+          </a>
+          {" \u2022 "}
+          <a href="/privacy" className="hover:text-gray-600 hover:underline">
+            {t("privacy")}
+          </a>
+        </p>
+      </div>
     </div>
   );
 }

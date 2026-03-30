@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
+import { useTranslations } from "next-intl";
 import { cn } from "@kern/ui";
 import {
   LayoutDashboard,
@@ -18,25 +19,26 @@ import {
 } from "lucide-react";
 
 interface NavItem {
-  label: string;
+  labelKey: string;
   href: string;
   icon: React.ElementType;
 }
 
 const navItems: NavItem[] = [
-  { label: "Tableau de bord", href: "/dashboard", icon: LayoutDashboard },
-  { label: "Utilisateurs", href: "/admin/users", icon: Users },
-  { label: "Organisations", href: "/admin/tenants", icon: Building2 },
-  { label: "Audit", href: "/admin/audit", icon: Shield },
-  { label: "Confidentialité", href: "/admin/privacy", icon: Lock },
-  { label: "Paramètres", href: "/settings", icon: Settings },
+  { labelKey: "dashboard", href: "/dashboard", icon: LayoutDashboard },
+  { labelKey: "users", href: "/admin/users", icon: Users },
+  { labelKey: "organizations", href: "/admin/tenants", icon: Building2 },
+  { labelKey: "audit", href: "/admin/audit", icon: Shield },
+  { labelKey: "privacy", href: "/admin/privacy", icon: Lock },
+  { labelKey: "settings", href: "/settings", icon: Settings },
 ];
 
 export function Sidebar() {
   const pathname = usePathname();
   const { data: session } = useSession();
+  const t = useTranslations("sidebar");
   const [mobileOpen, setMobileOpen] = useState(false);
-  const userName = session?.user?.name ?? session?.user?.email ?? "Utilisateur";
+  const userName = session?.user?.name ?? session?.user?.email ?? t("dashboard");
   const userInitial = userName.charAt(0).toUpperCase();
 
   const isActive = (href: string) =>
@@ -77,7 +79,7 @@ export function Sidebar() {
                   onClick={() => setMobileOpen(false)}
                 >
                   <Icon className="h-5 w-5 shrink-0" />
-                  <span>{item.label}</span>
+                  <span>{t(item.labelKey)}</span>
                 </Link>
               </li>
             );
@@ -99,7 +101,7 @@ export function Sidebar() {
           <button
             type="button"
             className="text-slate-400 hover:text-white transition-colors"
-            aria-label="Se déconnecter"
+            aria-label={t("logout")}
             onClick={() => signOut({ callbackUrl: "/login" })}
           >
             <LogOut className="h-4 w-4" />

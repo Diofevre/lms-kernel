@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
+import { NextIntlClientProvider } from "next-intl";
+import { getLocale, getMessages } from "next-intl/server";
 import { AuthSessionProvider } from "@/components/auth/session-provider";
 import "./globals.css";
 
@@ -10,16 +12,21 @@ export const metadata: Metadata = {
   description: "Institutional application kernel",
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  const locale = await getLocale();
+  const messages = await getMessages();
+
   return (
-    <html lang="fr" suppressHydrationWarning>
+    <html lang={locale} suppressHydrationWarning>
       <body className={`${inter.variable} font-sans antialiased`}>
         <a href="#main-content" className="skip-nav">
-          Aller au contenu principal
+          {locale === "en" ? "Skip to content" : locale === "es" ? "Ir al contenido" : "Aller au contenu principal"}
         </a>
-        <AuthSessionProvider>
-          <main id="main-content">{children}</main>
-        </AuthSessionProvider>
+        <NextIntlClientProvider messages={messages}>
+          <AuthSessionProvider>
+            <main id="main-content">{children}</main>
+          </AuthSessionProvider>
+        </NextIntlClientProvider>
       </body>
     </html>
   );

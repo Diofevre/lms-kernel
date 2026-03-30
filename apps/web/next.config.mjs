@@ -1,10 +1,13 @@
+import createNextIntlPlugin from "next-intl/plugin";
+
+const withNextIntl = createNextIntlPlugin("./src/i18n/request.ts");
+
 /** @type {import('next').NextConfig} */
 const isDev = process.env.NODE_ENV === "development";
 
 const nextConfig = {
   reactStrictMode: true,
 
-  // Security headers — relaxed in dev (Next.js HMR needs unsafe-eval), strict in prod
   async headers() {
     return [
       {
@@ -15,7 +18,7 @@ const nextConfig = {
           { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
           { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=()" },
           ...(isDev
-            ? [] // No CSP in dev — Next.js HMR requires unsafe-eval
+            ? []
             : [
                 {
                   key: "Content-Security-Policy",
@@ -36,4 +39,4 @@ const nextConfig = {
   },
 };
 
-export default nextConfig;
+export default withNextIntl(nextConfig);
