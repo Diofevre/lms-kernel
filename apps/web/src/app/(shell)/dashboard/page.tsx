@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
+import { useTranslations } from "next-intl";
 import { Users, AlertTriangle, Activity, Loader2 } from "lucide-react";
 import { apiGet } from "@/lib/api";
 
@@ -14,10 +15,11 @@ interface StatCard {
 
 export default function DashboardPage() {
   const { data: session } = useSession();
+  const t = useTranslations("dashboard");
   const [stats, setStats] = useState<StatCard[]>([
-    { label: "Nombre d'utilisateurs", value: "—", icon: Users, color: "text-blue-600 bg-blue-50" },
-    { label: "Demandes Loi 25 en attente", value: "—", icon: AlertTriangle, color: "text-amber-600 bg-amber-50" },
-    { label: "Événements d'audit (24h)", value: "—", icon: Activity, color: "text-emerald-600 bg-emerald-50" },
+    { label: t("userCount"), value: "—", icon: Users, color: "text-blue-600 bg-blue-50" },
+    { label: t("loi25Pending"), value: "—", icon: AlertTriangle, color: "text-amber-600 bg-amber-50" },
+    { label: t("auditEvents"), value: "—", icon: Activity, color: "text-emerald-600 bg-emerald-50" },
   ]);
   const [loading, setLoading] = useState(true);
   const token = (session as Record<string, unknown> | null)?.accessToken as string | undefined;
@@ -64,16 +66,16 @@ export default function DashboardPage() {
     void loadStats();
   }, [token]);
 
-  const userName = session?.user?.name ?? "Utilisateur";
+  const userName = session?.user?.name ?? "";
 
   return (
     <div className="space-y-8">
       <div>
         <h1 className="text-2xl font-semibold text-gray-900 tracking-tight">
-          Tableau de bord
+          {t("title")}
         </h1>
         <p className="mt-1 text-sm text-gray-500">
-          Bienvenue, {userName}.
+          {t("welcome", { name: userName })}.
         </p>
       </div>
 
