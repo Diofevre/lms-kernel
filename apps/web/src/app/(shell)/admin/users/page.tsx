@@ -57,7 +57,7 @@ export default function UsersPage() {
   const [error, setError] = useState<string | null>(null);
   const [openActions, setOpenActions] = useState<string | null>(null);
 
-  const token = (session as Record<string, unknown> | null)?.accessToken as string | undefined;
+  const token = session?.accessToken;
 
   const fetchUsers = useCallback(async () => {
     try {
@@ -196,7 +196,7 @@ export default function UsersPage() {
               <tr>
                 <td colSpan={6} className="px-4 py-12 text-center">
                   <Loader2 className="mx-auto h-6 w-6 animate-spin text-gray-400" />
-                  <p className="mt-2 text-sm text-gray-500">Chargement...</p>
+                  <p className="mt-2 text-sm text-gray-500">{tc("loading")}</p>
                 </td>
               </tr>
             ) : filtered.length === 0 ? (

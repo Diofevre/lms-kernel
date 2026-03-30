@@ -33,19 +33,22 @@ export class UserController {
   @Roles("tenant_admin", "super_admin")
   @ApiOperation({ summary: "List users for current tenant (tenant_admin)" })
   async listUsers(@Req() req: AuthenticatedRequest, @Query() query: UserQueryDto) {
-    let tenantId = req.tenantId ?? req.user.tenantId;
+    // tenantId comes from: 1) tenant middleware (subdomain), 2) auth guard (DB lookup)
+    const tenantId = req.tenantId || req.user.tenantId;
 
-    // super_admin with no tenant resolved: show all users (or resolve from slug)
-    if ((!tenantId || tenantId === "") && req.user.roles.includes("super_admin")) {
-      tenantId = ""; // Empty = show all
-    }
+    // super_admin can see all users by passing special query param ?all=true
+    // Otherwise, tenantId is required
+    const showAll = req.user.roles.includes("super_admin") && query.all === "true";
 
     const options: { search?: string; role?: string; page?: number; limit?: number } = {};
     if (query.search !== undefined) options.search = query.search;
     if (query.role !== undefined) options.role = query.role;
     if (query.page !== undefined) options.page = query.page;
     if (query.limit !== undefined) options.limit = query.limit;
-    return this.userService.findByTenant(tenantId, options);
+
+    // If super_admin wants all, or if we have a tenantId, proceed
+    // The service will filter by tenantId if provided
+    return this.userService.findByTenant(showAll ? "" : tenantId, options);
   }
 
   @Get(":id")

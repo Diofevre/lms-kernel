@@ -50,7 +50,7 @@ export default function AuditPage() {
   const [expandedRow, setExpandedRow] = useState<string | null>(null);
   const [verifyResult, setVerifyResult] = useState<"idle" | "valid" | "invalid" | "loading">("idle");
 
-  const token = (session as Record<string, unknown> | null)?.accessToken as string | undefined;
+  const token = session?.accessToken;
 
   const fetchLogs = useCallback(async () => {
     if (!token) return;
@@ -246,7 +246,7 @@ export default function AuditPage() {
               <tr>
                 <td colSpan={6} className="px-4 py-12 text-center">
                   <Loader2 className="mx-auto h-6 w-6 animate-spin text-gray-400" />
-                  <p className="mt-2 text-sm text-gray-500">Chargement...</p>
+                  <p className="mt-2 text-sm text-gray-500">{tc("loading")}</p>
                 </td>
               </tr>
             ) : entries.length === 0 ? (
@@ -254,10 +254,10 @@ export default function AuditPage() {
                 <td colSpan={6} className="px-4 py-12 text-center">
                   <Shield className="mx-auto h-10 w-10 text-gray-300" />
                   <p className="mt-2 text-sm font-medium text-gray-900">
-                    Aucun événement d&apos;audit
+                    {t("noEvents")}
                   </p>
                   <p className="mt-1 text-sm text-gray-500">
-                    Les événements apparaîtront ici automatiquement.
+                    {t("noEventsHint")}
                   </p>
                 </td>
               </tr>

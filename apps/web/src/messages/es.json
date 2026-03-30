@@ -212,5 +212,22 @@
     "fr": "Français",
     "en": "English",
     "es": "Español"
+  },
+  "support": {
+    "title": "Soporte",
+    "subtitle": "Envíe y siga sus solicitudes de soporte.",
+    "newTicket": "Nueva solicitud",
+    "subject": "Asunto",
+    "subjectPlaceholder": "Describa brevemente su problema",
+    "description": "Descripción",
+    "descriptionPlaceholder": "Proporcione tantos detalles como sea posible...",
+    "submit": "Enviar",
+    "submitting": "Enviando...",
+    "noTickets": "Sin solicitudes",
+    "noTicketsHint": "Sus solicitudes aparecerán aquí.",
+    "statusOpen": "Abierto",
+    "statusInProgress": "En progreso",
+    "statusResolved": "Resuelto",
+    "statusClosed": "Cerrado"
   }
 }

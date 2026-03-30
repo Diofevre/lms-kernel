@@ -25,7 +25,8 @@ export class AuditService {
     options: { from?: string; to?: string; action?: string; limit?: number },
   ) {
     const where: Record<string, unknown> = {};
-    if (tenantId && tenantId !== "") {
+    // tenantId filter: always applied unless explicitly empty (super_admin ?all=true)
+    if (tenantId) {
       where["tenantId"] = tenantId;
     }
 

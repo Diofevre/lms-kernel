@@ -29,7 +29,7 @@ export function SessionGuard({ children }: { children: React.ReactNode }) {
   // Check for session errors (expired token, refresh failed)
   useEffect(() => {
     if (!session) return;
-    const error = (session as unknown as Record<string, unknown>).error as string | undefined;
+    const error = session?.error;
     if (error === "SessionExpired" || error === "RefreshFailed") {
       void signOut({ callbackUrl: "/login" });
     }

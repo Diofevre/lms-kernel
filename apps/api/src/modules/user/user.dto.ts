@@ -46,6 +46,11 @@ export class ToggleUserDto {
 }
 
 export class UserQueryDto {
+  @ApiPropertyOptional({ description: "super_admin: set to 'true' to list users across all tenants" })
+  @IsOptional()
+  @IsString()
+  all?: string;
+
   @ApiPropertyOptional({ example: "jean" })
   @IsOptional()
   @IsString()

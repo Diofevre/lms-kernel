@@ -39,7 +39,7 @@ export default function SettingsPage() {
   // Feedback
   const [feedback, setFeedback] = useState<{ type: "success" | "error"; message: string } | null>(null);
 
-  const token = (session as unknown as Record<string, unknown> | null)?.accessToken as string | undefined;
+  const token = session?.accessToken;
 
   // Pre-fill from session
   useEffect(() => {

@@ -212,5 +212,22 @@
     "fr": "Français",
     "en": "English",
     "es": "Español"
+  },
+  "support": {
+    "title": "Soutien",
+    "subtitle": "Soumettez et suivez vos demandes.",
+    "newTicket": "Nouvelle demande",
+    "subject": "Sujet",
+    "subjectPlaceholder": "Décrivez brièvement votre problème",
+    "description": "Description",
+    "descriptionPlaceholder": "Donnez le plus de détails possible...",
+    "submit": "Soumettre",
+    "submitting": "Envoi...",
+    "noTickets": "Aucune demande",
+    "noTicketsHint": "Vos demandes apparaîtront ici.",
+    "statusOpen": "Ouvert",
+    "statusInProgress": "En cours",
+    "statusResolved": "Résolu",
+    "statusClosed": "Fermé"
   }
 }

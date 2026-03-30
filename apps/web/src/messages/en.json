@@ -212,5 +212,22 @@
     "fr": "Français",
     "en": "English",
     "es": "Español"
+  },
+  "support": {
+    "title": "Support",
+    "subtitle": "Submit and track your support requests.",
+    "newTicket": "New request",
+    "subject": "Subject",
+    "subjectPlaceholder": "Briefly describe your issue",
+    "description": "Description",
+    "descriptionPlaceholder": "Provide as many details as possible...",
+    "submit": "Submit",
+    "submitting": "Sending...",
+    "noTickets": "No requests",
+    "noTicketsHint": "Your requests will appear here.",
+    "statusOpen": "Open",
+    "statusInProgress": "In progress",
+    "statusResolved": "Resolved",
+    "statusClosed": "Closed"
   }
 }

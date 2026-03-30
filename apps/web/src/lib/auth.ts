@@ -1,9 +1,10 @@
 /**
  * NextAuth v5 configuration for Kern.
  *
- * IMPORTANT: The Credentials provider stores the Keycloak access_token
- * in the user object, which is then propagated to the JWT token.
- * This allows frontend pages to call the NestJS API with a valid Bearer token.
+ * NO WORKAROUNDS:
+ * - Types properly augmented in types/next-auth.d.ts (zero `as any`)
+ * - Keycloak access_token stored via User object → JWT callback → Session
+ * - Session maxAge 30 minutes, token expiration tracked
  */
 
 import NextAuth from "next-auth";
@@ -12,8 +13,7 @@ import Credentials from "next-auth/providers/credentials";
 import Keycloak from "next-auth/providers/keycloak";
 import Google from "next-auth/providers/google";
 
-/** JWT maxAge in seconds (30 minutes) */
-const JWT_MAX_AGE = 30 * 60;
+const JWT_MAX_AGE = 30 * 60; // 30 minutes
 
 export const authConfig: NextAuthConfig = {
   providers: [
@@ -48,17 +48,15 @@ export const authConfig: NextAuthConfig = {
             email ||
             null;
 
-          // CRITICAL: Store Keycloak tokens in the user object
-          // They will be picked up by the JWT callback below
           return {
             id: userinfo["sub"] as string,
             email,
             name,
             image: null,
-            // Custom fields — propagated via JWT callback
+            // Stored in JWT via the jwt callback below
             accessToken: tokenResponse.access_token,
             refreshToken: tokenResponse.refresh_token,
-          } as Record<string, unknown>;
+          };
         } catch {
           return null;
         }
@@ -84,41 +82,43 @@ export const authConfig: NextAuthConfig = {
     jwt({ token, account, user }) {
       const now = Math.floor(Date.now() / 1000);
 
-      // First login via OAuth provider (Keycloak OIDC, Google, etc.)
+      // OAuth provider login (Keycloak OIDC, Google)
       if (account?.access_token) {
         token.accessToken = account.access_token;
-        token.refreshToken = account.refresh_token;
+        token.refreshToken = account.refresh_token ?? undefined;
         token.provider = account.provider;
         token.expiresAt = now + ((account.expires_in as number) ?? JWT_MAX_AGE);
         return token;
       }
 
-      // First login via Credentials — tokens are on the user object
-      if (user && (user as Record<string, unknown>).accessToken) {
-        token.accessToken = (user as Record<string, unknown>).accessToken;
-        token.refreshToken = (user as Record<string, unknown>).refreshToken;
+      // Credentials login — tokens come from the User object
+      if (user?.accessToken) {
+        token.accessToken = user.accessToken;
+        token.refreshToken = user.refreshToken;
         token.provider = "credentials";
         token.expiresAt = now + JWT_MAX_AGE;
         return token;
+      }
+
+      // Check expiration
+      if (token.expiresAt && now >= token.expiresAt) {
+        token.error = "SessionExpired";
       }
 
       return token;
     },
 
     session({ session, token }) {
-      // Expose accessToken to the client so pages can call the API
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (session as any).accessToken = token.accessToken;
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (session as any).error = token.error;
+      // Properly typed — no `as any` needed thanks to type augmentation
+      session.accessToken = token.accessToken;
+      session.error = token.error;
       return session;
     },
 
     authorized({ auth, request }) {
       const { pathname } = request.nextUrl;
       const publicPaths = ["/login", "/forgot-password", "/api/auth"];
-      const isPublic = publicPaths.some((p) => pathname.startsWith(p));
-      if (isPublic) return true;
+      if (publicPaths.some((p) => pathname.startsWith(p))) return true;
       if (pathname.startsWith("/_next") || pathname === "/favicon.ico") return true;
       return !!auth?.user;
     },

@@ -63,7 +63,7 @@ export default function PrivacyPage() {
 
   const t = useTranslations("privacy");
   const tc = useTranslations("common");
-  const token = (session as unknown as Record<string, unknown> | null)?.accessToken as string | undefined;
+  const token = session?.accessToken;
 
   const fetchRequests = useCallback(async () => {
     if (!token) return;
@@ -178,15 +178,15 @@ export default function PrivacyPage() {
                   <tr>
                     <td colSpan={6} className="px-4 py-12 text-center">
                       <Loader2 className="mx-auto h-6 w-6 animate-spin text-gray-400" />
-                      <p className="mt-2 text-sm text-gray-500">Chargement...</p>
+                      <p className="mt-2 text-sm text-gray-500">{tc("loading")}</p>
                     </td>
                   </tr>
                 ) : requests.length === 0 ? (
                   <tr>
                     <td colSpan={6} className="px-4 py-12 text-center">
                       <Lock className="mx-auto h-10 w-10 text-gray-300" />
-                      <p className="mt-2 text-sm font-medium text-gray-900">Aucune demande en cours</p>
-                      <p className="mt-1 text-sm text-gray-500">Les demandes de droits apparaîtront ici.</p>
+                      <p className="mt-2 text-sm font-medium text-gray-900">{t("noRequests")}</p>
+                      <p className="mt-1 text-sm text-gray-500">{t("noRequestsHint")}</p>
                     </td>
                   </tr>
                 ) : (

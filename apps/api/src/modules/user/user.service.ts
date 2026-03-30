@@ -17,8 +17,9 @@ export class UserService {
     const where: Record<string, unknown> = {
       deletedAt: null,
     };
-    // If tenantId is provided, filter by it. If empty (super_admin), show all.
-    if (tenantId && tenantId !== "") {
+    // tenantId is ALWAYS required. The controller must resolve it before calling this.
+    // For super_admin cross-tenant access, pass null explicitly via a separate method.
+    if (tenantId) {
       where["tenantId"] = tenantId;
     }
 

@@ -29,7 +29,7 @@ export default function TenantsPage() {
   const [error, setError] = useState<string | null>(null);
   const [openActions, setOpenActions] = useState<string | null>(null);
 
-  const token = (session as Record<string, unknown> | null)?.accessToken as string | undefined;
+  const token = session?.accessToken;
 
   const fetchTenants = useCallback(async () => {
     try {

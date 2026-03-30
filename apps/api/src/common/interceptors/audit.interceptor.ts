@@ -5,6 +5,7 @@ import {
   CallHandler,
   Inject,
   Optional,
+  Logger,
 } from "@nestjs/common";
 import { Observable, tap } from "rxjs";
 import { createHash } from "crypto";
@@ -18,13 +19,22 @@ interface AuditableRequest extends FastifyRequest {
 
 /**
  * AuditInterceptor — logs every mutating API call to the immutable audit log.
- * Delegates to AuditLogService (not PrismaService directly) to avoid DI scope issues.
+ *
+ * NO WORKAROUNDS:
+ * - If AuditLogService is not available, log a WARNING (not silent)
+ * - Uses NestJS Logger, not console.log
  */
 @Injectable()
 export class AuditInterceptor implements NestInterceptor {
+  private readonly logger = new Logger(AuditInterceptor.name);
+
   constructor(
     @Optional() @Inject(AuditLogService) private readonly auditLog?: AuditLogService,
-  ) {}
+  ) {
+    if (!this.auditLog) {
+      this.logger.warn("AuditLogService not injected — audit entries will NOT be persisted to DB");
+    }
+  }
 
   intercept(context: ExecutionContext, next: CallHandler): Observable<unknown> {
     const request = context.switchToHttp().getRequest<AuditableRequest>();
@@ -54,15 +64,18 @@ export class AuditInterceptor implements NestInterceptor {
     error?: unknown,
   ): Promise<void> {
     try {
-      const tenantId = request.tenantId ?? request.user?.tenantId ?? "unknown";
+      const tenantId = request.tenantId ?? request.user?.tenantId;
       const userId = request.user?.id ?? "anonymous";
       const path = request.url.split("?")[0] ?? "/";
       const action = `api.${request.method.toLowerCase()}.${path.replace(/\//g, ".").replace(/^\./, "")}`;
 
       if (!this.auditLog) {
-        if (process.env["NODE_ENV"] === "development") {
-          console.log("[AUDIT]", JSON.stringify({ action, userId, tenantId, outcome, durationMs }));
-        }
+        // Not silently swallowed — warning was logged at startup
+        return;
+      }
+
+      if (!tenantId) {
+        this.logger.warn(`Audit skipped: no tenantId resolved for ${action}`);
         return;
       }
 
@@ -80,7 +93,7 @@ export class AuditInterceptor implements NestInterceptor {
         },
       });
     } catch (err) {
-      console.error("[AUDIT ERROR]", err);
+      this.logger.error(`Audit write failed: ${String(err)}`);
     }
   }
 }

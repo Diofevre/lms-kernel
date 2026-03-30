@@ -22,7 +22,7 @@ export default function DashboardPage() {
     { label: t("auditEvents"), value: "—", icon: Activity, color: "text-emerald-600 bg-emerald-50" },
   ]);
   const [loading, setLoading] = useState(true);
-  const token = (session as Record<string, unknown> | null)?.accessToken as string | undefined;
+  const token = session?.accessToken;
 
   useEffect(() => {
     if (!token) return;
