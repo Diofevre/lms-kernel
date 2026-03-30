@@ -11,6 +11,7 @@ import { TenantModule } from "./modules/tenant/tenant.module.js";
 import { UserModule } from "./modules/user/user.module.js";
 import { PrivacyModule } from "./modules/privacy/privacy.module.js";
 import { AuditModule } from "./modules/audit/audit.module.js";
+import { SupportModule } from "./modules/support/support.module.js";
 
 @Module({
   imports: [
@@ -31,8 +32,9 @@ import { AuditModule } from "./modules/audit/audit.module.js";
     UserModule,
     PrivacyModule,
     AuditModule,
+    SupportModule,
 
-    // ── LMS modules (loaded dynamically based on tenant config) ────────
+    // ── App modules (loaded dynamically based on tenant config) ────────
     // Loaded via ModuleRegistry — see docs/MODULE_CONTRACT.md
   ],
   providers: [
