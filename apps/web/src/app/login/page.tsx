@@ -1,37 +1,36 @@
 import { Suspense } from "react";
+import { ShieldCheck } from "lucide-react";
 import { LoginForm } from "@/components/auth/login-form";
 
 export const metadata = {
   title: "Connexion — Kern",
-  description: "Connectez-vous a votre compte Kern.",
+  description: "Connectez-vous à votre compte Kern.",
 };
 
-/**
- * /login — server component shell. The interactive form is a client component
- * wrapped in Suspense because it uses useSearchParams().
- */
 export default function LoginPage() {
   return (
-    <div className="w-full max-w-[400px]">
-      {/* Logo — replaced per tenant via theming */}
-      <div className="mb-8 text-center">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src="/logo-icon.svg"
-          alt="Kern"
-          className="mx-auto h-12 w-auto"
-        />
-        <h1 className="mt-4 text-2xl font-semibold tracking-tight text-gray-900">
-          Kern
+    <div className="w-full max-w-[420px]">
+      {/* Security badge */}
+      <div className="mb-6 flex items-center gap-2">
+        <ShieldCheck className="h-4 w-4 text-emerald-500" />
+        <span className="text-xs font-medium uppercase tracking-widest text-emerald-600">
+          Connexion sécurisée
+        </span>
+      </div>
+
+      {/* Heading */}
+      <div className="mb-8">
+        <h1 className="text-[28px] font-semibold tracking-tight text-gray-900">
+          Connexion
         </h1>
-        <p className="mt-1 text-sm text-gray-500">
-          Connectez-vous pour continuer
+        <p className="mt-2 text-sm text-gray-500">
+          Entrez vos identifiants pour accéder à votre espace
         </p>
       </div>
 
       <Suspense
         fallback={
-          <div className="flex h-[420px] items-center justify-center rounded-xl bg-white shadow-sm ring-1 ring-gray-200">
+          <div className="flex h-[380px] items-center justify-center">
             <div className="h-5 w-5 animate-spin rounded-full border-2 border-gray-300 border-t-gray-900" />
           </div>
         }
@@ -46,7 +45,7 @@ export default function LoginPage() {
         </a>
         {" \u2022 "}
         <a href="/privacy" className="hover:text-gray-600 hover:underline">
-          Politique de confidentialit&eacute;
+          Politique de confidentialité
         </a>
       </p>
     </div>

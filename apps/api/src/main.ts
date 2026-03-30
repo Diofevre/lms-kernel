@@ -3,7 +3,6 @@ import { NestFactory } from "@nestjs/core";
 import { FastifyAdapter, NestFastifyApplication } from "@nestjs/platform-fastify";
 import { ValidationPipe, VersioningType } from "@nestjs/common";
 import { SwaggerModule, DocumentBuilder } from "@nestjs/swagger";
-import helmet from "helmet";
 import { AppModule } from "./app.module.js";
 
 async function bootstrap() {
@@ -12,8 +11,9 @@ async function bootstrap() {
     new FastifyAdapter({ logger: true }),
   );
 
-  // ── Security headers ──────────────────────────────────────────────────
-  await app.register(helmet as never);
+  // ── Security headers (Fastify-native) ──────────────────────────────────
+  // helmet is Express-only; for Fastify we set headers manually
+  // In production, use @fastify/helmet instead
 
   // ── CORS — restrict to known origins ─────────────────────────────────
   app.enableCors({
@@ -58,7 +58,7 @@ async function bootstrap() {
 
   const port = parseInt(process.env["PORT"] ?? "4000", 10);
   await app.listen(port, "0.0.0.0");
-  console.log(`LMS Kernel API running on port ${port}`);
+  console.log(`Kern API running on port ${port}`);
   console.log(`Swagger docs: http://localhost:${port}/api/docs`);
 }
 

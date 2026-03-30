@@ -7,10 +7,15 @@ export class TenantService {
   constructor(private readonly prisma: PrismaService) {}
 
   async findAll() {
-    return this.prisma.tenant.findMany({
+    const tenants = await this.prisma.tenant.findMany({
       where: { deletedAt: null },
       orderBy: { createdAt: "desc" },
     });
+    // Convert BigInt fields to Number for JSON serialization
+    return tenants.map((t) => ({
+      ...t,
+      maxStorageBytes: Number(t.maxStorageBytes),
+    }));
   }
 
   async findBySlug(slug: string) {

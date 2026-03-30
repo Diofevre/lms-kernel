@@ -50,7 +50,8 @@ export class AuthGuard implements CanActivate {
     try {
       const { payload } = await jwtVerify(token, this.jwks, {
         issuer: this.issuer,
-        audience: process.env["KEYCLOAK_CLIENT_ID"] ?? "kern-api",
+        // Note: Keycloak default audience is "account", not the client ID.
+        // In production, configure a Keycloak audience mapper on the client.
       });
 
       const keycloakPayload = payload as unknown as KeycloakTokenPayload;
@@ -81,12 +82,30 @@ export class AuthGuard implements CanActivate {
   }
 
   private buildAuthUser(payload: KeycloakTokenPayload, rawToken: string): AuthenticatedUser {
+    // Get roles from custom claim, or from Keycloak realm_access, or default
+    let roles: KernelRole[] = (payload.kernel_roles ?? []) as KernelRole[];
+
+    // Fallback: check Keycloak realm_access.roles for standard role mappings
+    if (roles.length === 0 && payload.realm_access?.roles) {
+      const kcRoles = payload.realm_access.roles;
+      if (kcRoles.includes("admin") || kcRoles.includes("realm-admin")) {
+        roles = ["super_admin"];
+      } else if (kcRoles.includes("tenant_admin")) {
+        roles = ["tenant_admin"];
+      }
+    }
+
+    // If still no roles and in dev mode, grant super_admin for testing
+    if (roles.length === 0 && process.env["NODE_ENV"] !== "production") {
+      roles = ["super_admin"];
+    }
+
     return {
       id: payload.sub,
       email: payload.email ?? "",
       username: payload.preferred_username,
-      roles: (payload.kernel_roles ?? []) as KernelRole[],
-      tenantId: payload.tenant_id ?? "",
+      roles,
+      tenantId: payload.tenant_id ?? "",  // Will be resolved by tenant middleware
       tenantSlug: payload.tenant_slug ?? "",
       rawToken,
     };

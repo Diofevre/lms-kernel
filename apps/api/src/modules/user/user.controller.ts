@@ -33,7 +33,13 @@ export class UserController {
   @Roles("tenant_admin", "super_admin")
   @ApiOperation({ summary: "List users for current tenant (tenant_admin)" })
   async listUsers(@Req() req: AuthenticatedRequest, @Query() query: UserQueryDto) {
-    const tenantId = req.tenantId ?? req.user.tenantId;
+    let tenantId = req.tenantId ?? req.user.tenantId;
+
+    // super_admin with no tenant resolved: show all users (or resolve from slug)
+    if ((!tenantId || tenantId === "") && req.user.roles.includes("super_admin")) {
+      tenantId = ""; // Empty = show all
+    }
+
     const options: { search?: string; role?: string; page?: number; limit?: number } = {};
     if (query.search !== undefined) options.search = query.search;
     if (query.role !== undefined) options.role = query.role;

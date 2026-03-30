@@ -32,8 +32,9 @@ export default function TenantsPage() {
     try {
       setLoading(true);
       setError(null);
-      const data = await apiGet<Tenant[]>("/v1/tenants", token);
-      setTenants(data);
+      const response = await apiGet<Tenant[] | { data: Tenant[] }>("/v1/tenants", token);
+      const list = Array.isArray(response) ? response : (response as { data: Tenant[] }).data ?? [];
+      setTenants(list);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erreur de chargement");
     } finally {

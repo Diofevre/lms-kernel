@@ -19,7 +19,7 @@ export class AuditController {
   constructor(private readonly auditService: AuditService) {}
 
   @Get("logs")
-  @Roles("auditor", "tenant_admin", "privacy_officer")
+  @Roles("super_admin", "auditor", "tenant_admin", "privacy_officer")
   @ApiOperation({
     summary: "Query immutable audit log",
     description:
@@ -41,7 +41,7 @@ export class AuditController {
   }
 
   @Get("verify")
-  @Roles("auditor", "tenant_admin")
+  @Roles("super_admin", "auditor", "tenant_admin")
   @ApiOperation({
     summary: "Verify audit log chain integrity",
     description: "Recomputes SHA-256 hash chain to detect any tampering.",

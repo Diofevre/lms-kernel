@@ -15,9 +15,12 @@ export class UserService {
     const skip = (page - 1) * limit;
 
     const where: Record<string, unknown> = {
-      tenantId,
       deletedAt: null,
     };
+    // If tenantId is provided, filter by it. If empty (super_admin), show all.
+    if (tenantId && tenantId !== "") {
+      where["tenantId"] = tenantId;
+    }
 
     if (options?.search) {
       where["OR"] = [

@@ -24,7 +24,10 @@ export class AuditService {
     tenantId: string,
     options: { from?: string; to?: string; action?: string; limit?: number },
   ) {
-    const where: Record<string, unknown> = { tenantId };
+    const where: Record<string, unknown> = {};
+    if (tenantId && tenantId !== "") {
+      where["tenantId"] = tenantId;
+    }
 
     if (options.action) {
       where["action"] = options.action;

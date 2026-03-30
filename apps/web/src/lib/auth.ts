@@ -1,12 +1,9 @@
 /**
  * NextAuth v5 configuration for Kern.
  *
- * Security features:
- *   - JWT with 30-minute maxAge, auto-refresh via Keycloak
- *   - Credentials (email/password via Keycloak Direct Access Grant)
- *   - Keycloak OIDC + Google OAuth + Microsoft + Apple (configurable per tenant)
- *   - authorized callback protects all routes except /login, /forgot-password
- *   - Token expiration tracked — forces re-login when expired
+ * IMPORTANT: The Credentials provider stores the Keycloak access_token
+ * in the user object, which is then propagated to the JWT token.
+ * This allows frontend pages to call the NestJS API with a valid Bearer token.
  */
 
 import NextAuth from "next-auth";
@@ -17,9 +14,6 @@ import Google from "next-auth/providers/google";
 
 /** JWT maxAge in seconds (30 minutes) */
 const JWT_MAX_AGE = 30 * 60;
-
-/** Refresh window: refresh token 5 minutes before expiry */
-const REFRESH_WINDOW_S = 5 * 60;
 
 export const authConfig: NextAuthConfig = {
   providers: [
@@ -34,9 +28,7 @@ export const authConfig: NextAuthConfig = {
         if (!credentials?.email || !credentials?.password) return null;
 
         try {
-          const { keycloakLogin, keycloakUserinfo } = await import(
-            "@kern/iam"
-          );
+          const { keycloakLogin, keycloakUserinfo } = await import("@kern/iam");
 
           const tokenResponse = await keycloakLogin(
             String(credentials.email).trim(),
@@ -47,8 +39,7 @@ export const authConfig: NextAuthConfig = {
 
           const givenName = (userinfo["given_name"] as string) ?? "";
           const familyName = (userinfo["family_name"] as string) ?? "";
-          const preferredUsername =
-            (userinfo["preferred_username"] as string) ?? "";
+          const preferredUsername = (userinfo["preferred_username"] as string) ?? "";
           const email = (userinfo["email"] as string) ?? "";
 
           const name: string | null =
@@ -57,12 +48,17 @@ export const authConfig: NextAuthConfig = {
             email ||
             null;
 
+          // CRITICAL: Store Keycloak tokens in the user object
+          // They will be picked up by the JWT callback below
           return {
             id: userinfo["sub"] as string,
             email,
             name,
             image: null,
-          };
+            // Custom fields — propagated via JWT callback
+            accessToken: tokenResponse.access_token,
+            refreshToken: tokenResponse.refresh_token,
+          } as Record<string, unknown>;
         } catch {
           return null;
         }
@@ -85,67 +81,46 @@ export const authConfig: NextAuthConfig = {
   },
 
   callbacks: {
-    jwt({ token, account }) {
+    jwt({ token, account, user }) {
       const now = Math.floor(Date.now() / 1000);
 
-      if (account) {
-        // First login — store token details
+      // First login via OAuth provider (Keycloak OIDC, Google, etc.)
+      if (account?.access_token) {
         token.accessToken = account.access_token;
         token.refreshToken = account.refresh_token;
         token.provider = account.provider;
-        token.expiresAt = now + (account.expires_in as number ?? JWT_MAX_AGE);
+        token.expiresAt = now + ((account.expires_in as number) ?? JWT_MAX_AGE);
         return token;
       }
 
-      // Token still valid and not in refresh window
-      const expiresAt = (token.expiresAt as number) ?? 0;
-      if (now < expiresAt - REFRESH_WINDOW_S) {
+      // First login via Credentials — tokens are on the user object
+      if (user && (user as Record<string, unknown>).accessToken) {
+        token.accessToken = (user as Record<string, unknown>).accessToken;
+        token.refreshToken = (user as Record<string, unknown>).refreshToken;
+        token.provider = "credentials";
+        token.expiresAt = now + JWT_MAX_AGE;
         return token;
-      }
-
-      // Token needs refresh — try Keycloak refresh
-      if (token.refreshToken && token.provider === "keycloak") {
-        try {
-          // Dynamic import to avoid issues at build time
-          // Refresh will be attempted, failure means re-login needed
-          token.error = "RefreshRequired";
-        } catch {
-          token.error = "RefreshFailed";
-        }
-      }
-
-      // For credentials provider, we can't refresh — mark as expired
-      if (now >= expiresAt) {
-        token.error = "SessionExpired";
       }
 
       return token;
     },
 
     session({ session, token }) {
-      if (token.accessToken) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (session as any).accessToken = token.accessToken;
-      }
-      if (token.error) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (session as any).error = token.error;
-      }
+      // Expose accessToken to the client so pages can call the API
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (session as any).accessToken = token.accessToken;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (session as any).error = token.error;
       return session;
     },
 
     authorized({ auth, request }) {
       const { pathname } = request.nextUrl;
-
       const publicPaths = ["/login", "/forgot-password", "/api/auth"];
       const isPublic = publicPaths.some((p) => pathname.startsWith(p));
       if (isPublic) return true;
-
-      // Also allow static assets
       if (pathname.startsWith("/_next") || pathname === "/favicon.ico") return true;
-
-      const isLoggedIn = !!auth?.user;
-      return isLoggedIn;
+      return !!auth?.user;
     },
   },
 

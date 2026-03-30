@@ -106,7 +106,7 @@ export class TenantMiddleware implements NestMiddleware {
       if (typeof headerSlug === "string" && headerSlug.length > 0) {
         return headerSlug;
       }
-      return "dev-tenant";
+      return "dev";
     }
 
     // Extract subdomain: "org.lms.example.com" -> "org"

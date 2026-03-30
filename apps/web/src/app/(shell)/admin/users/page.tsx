@@ -60,10 +60,12 @@ export default function UsersPage() {
     try {
       setLoading(true);
       setError(null);
-      const data = await apiGet<AppUser[]>("/v1/users", token);
-      setUsers(data.map((u) => ({
+      const response = await apiGet<{ data: AppUser[] } | AppUser[]>("/v1/users", token);
+      // API may return { data: [...], meta: {} } or [...]
+      const list = Array.isArray(response) ? response : (response as { data: AppUser[] }).data ?? [];
+      setUsers(list.map((u) => ({
         ...u,
-        status: (u as unknown as { isActive: boolean }).isActive ? "active" as const : "inactive" as const,
+        status: ((u as unknown as { isActive?: boolean }).isActive !== false ? "active" : "inactive") as UserStatus,
       })));
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erreur de chargement");

@@ -28,19 +28,30 @@ export default function DashboardPage() {
     async function loadStats() {
       try {
         // Fetch all stats in parallel
+        // Helper: extract array from API response (handles { data: [] } or [])
+        function extractArray(response: unknown): unknown[] {
+          if (Array.isArray(response)) return response;
+          if (response && typeof response === "object" && "data" in response) {
+            const d = (response as { data: unknown }).data;
+            if (Array.isArray(d)) return d;
+          }
+          return [];
+        }
+
         const [users, requests, auditLogs] = await Promise.allSettled([
-          apiGet<unknown[]>("/v1/users", token),
-          apiGet<unknown[]>("/v1/privacy/requests", token),
-          apiGet<unknown[]>("/v1/audit/logs?limit=500", token),
+          apiGet<unknown>("/v1/users", token),
+          apiGet<unknown>("/v1/privacy/requests", token),
+          apiGet<unknown>("/v1/audit/logs?limit=500", token),
         ]);
 
         setStats((prev) => prev.map((s, i) => {
-          if (i === 0 && users.status === "fulfilled") return { ...s, value: String(users.value.length) };
+          if (i === 0 && users.status === "fulfilled") return { ...s, value: String(extractArray(users.value).length) };
           if (i === 1 && requests.status === "fulfilled") {
-            const pending = (requests.value as Array<{ status: string }>).filter((r) => r.status === "pending").length;
+            const list = extractArray(requests.value) as Array<{ status: string }>;
+            const pending = list.filter((r) => r.status === "pending").length;
             return { ...s, value: String(pending) };
           }
-          if (i === 2 && auditLogs.status === "fulfilled") return { ...s, value: String(auditLogs.value.length) };
+          if (i === 2 && auditLogs.status === "fulfilled") return { ...s, value: String(extractArray(auditLogs.value).length) };
           return s;
         }));
       } catch {

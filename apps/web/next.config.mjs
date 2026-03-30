@@ -1,9 +1,10 @@
 /** @type {import('next').NextConfig} */
+const isDev = process.env.NODE_ENV === "development";
+
 const nextConfig = {
-  // Strict mode — catches accessibility issues in dev
   reactStrictMode: true,
 
-  // Security headers
+  // Security headers — relaxed in dev (Next.js HMR needs unsafe-eval), strict in prod
   async headers() {
     return [
       {
@@ -13,25 +14,26 @@ const nextConfig = {
           { key: "X-Content-Type-Options", value: "nosniff" },
           { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
           { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=()" },
-          {
-            key: "Content-Security-Policy",
-            value: [
-              "default-src 'self'",
-              "script-src 'self' 'unsafe-inline'",  // tighten after shadcn setup
-              "style-src 'self' 'unsafe-inline'",
-              "img-src 'self' data: blob:",
-              "font-src 'self'",
-              "connect-src 'self'",
-              "frame-ancestors 'none'",
-            ].join("; "),
-          },
+          ...(isDev
+            ? [] // No CSP in dev — Next.js HMR requires unsafe-eval
+            : [
+                {
+                  key: "Content-Security-Policy",
+                  value: [
+                    "default-src 'self'",
+                    "script-src 'self' 'unsafe-inline'",
+                    "style-src 'self' 'unsafe-inline'",
+                    "img-src 'self' data: blob: https:",
+                    "font-src 'self'",
+                    "connect-src 'self' https:",
+                    "frame-ancestors 'none'",
+                  ].join("; "),
+                },
+              ]),
         ],
       },
     ];
   },
-
-  // Tenant subdomain routing is handled in middleware.ts
-  // All env vars prefixed NEXT_PUBLIC_ are safe to expose to browser
 };
 
 export default nextConfig;

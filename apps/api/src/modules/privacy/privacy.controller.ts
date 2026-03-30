@@ -83,7 +83,7 @@ export class PrivacyController {
   }
 
   @Get("requests")
-  @Roles("privacy_officer", "tenant_admin")
+  @Roles("super_admin", "privacy_officer", "tenant_admin")
   @ApiOperation({
     summary: "List all data subject requests for tenant (privacy_officer)",
   })
@@ -93,7 +93,7 @@ export class PrivacyController {
   }
 
   @Patch("requests/:id")
-  @Roles("privacy_officer", "tenant_admin")
+  @Roles("super_admin", "privacy_officer", "tenant_admin")
   @ApiOperation({
     summary: "Process a data subject request (approve/deny)",
   })
