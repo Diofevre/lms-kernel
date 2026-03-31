@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import { cn } from "@kern/ui";
+import { useTenantTheme } from "@/components/theme/tenant-theme-provider";
 import {
   LayoutDashboard,
   Users,
@@ -69,6 +70,7 @@ export function Sidebar() {
   const t = useTranslations("sidebar");
   const [mobileOpen, setMobileOpen] = useState(false);
 
+  const tenantTheme = useTenantTheme();
   const userName = session?.user?.name ?? session?.user?.email ?? "";
   const userInitial = userName.charAt(0).toUpperCase() || "U";
 
@@ -85,12 +87,18 @@ export function Sidebar() {
 
   const navContent = (
     <>
-      {/* Logo — will be replaced by tenant logo via theming */}
+      {/* Logo — dynamic from tenant branding */}
       <div className="px-6 py-5">
         <Link href="/dashboard" className="flex items-center gap-3" aria-label="Retour au tableau de bord">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/logo-icon.svg" alt="" className="h-8 w-auto brightness-0 invert" />
-          <span className="text-xl font-bold text-white tracking-tight">Kern</span>
+          <img
+            src={tenantTheme.logoUrl ?? "/logo-icon.svg"}
+            alt=""
+            className="h-8 w-auto brightness-0 invert"
+          />
+          <span className="text-xl font-bold text-white tracking-tight">
+            {tenantTheme.name}
+          </span>
         </Link>
       </div>
 

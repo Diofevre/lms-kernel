@@ -3,6 +3,7 @@ import { Inter } from "next/font/google";
 import { NextIntlClientProvider } from "next-intl";
 import { getLocale, getMessages } from "next-intl/server";
 import { AuthSessionProvider } from "@/components/auth/session-provider";
+import { TenantThemeProvider } from "@/components/theme/tenant-theme-provider";
 import "./globals.css";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
@@ -24,7 +25,9 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         </a>
         <NextIntlClientProvider messages={messages}>
           <AuthSessionProvider>
-            <main id="main-content">{children}</main>
+            <TenantThemeProvider>
+              <main id="main-content">{children}</main>
+            </TenantThemeProvider>
           </AuthSessionProvider>
         </NextIntlClientProvider>
       </body>

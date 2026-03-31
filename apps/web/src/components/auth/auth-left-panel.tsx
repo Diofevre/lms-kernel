@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@kern/ui";
+import { useTenantTheme } from "@/components/theme/tenant-theme-provider";
 
 /**
  * Left panel for auth pages — dark background with gradient blobs,
@@ -11,6 +12,7 @@ import { cn } from "@kern/ui";
  */
 export function AuthLeftPanel() {
   const pathname = usePathname();
+  const tenantTheme = useTenantTheme();
   const isSignIn = pathname === "/login";
   const isForgotPassword = pathname === "/forgot-password";
 
@@ -48,8 +50,8 @@ export function AuthLeftPanel() {
           className="flex items-center gap-3 mb-10 text-white transition-opacity hover:opacity-90"
         >
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/logo-icon.svg" alt="" className="h-7 w-auto brightness-0 invert" />
-          <span className="text-xl font-semibold tracking-tight">Kern</span>
+          <img src={tenantTheme.logoUrl ?? "/logo-icon.svg"} alt="" className="h-7 w-auto brightness-0 invert" />
+          <span className="text-xl font-semibold tracking-tight">{tenantTheme.name}</span>
         </Link>
 
         <h1 className="text-4xl font-bold tracking-tight text-white mb-3 text-center">

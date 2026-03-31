@@ -30,9 +30,10 @@ const middleware: NextMiddleware = auth((req: NextRequest) => {
 
   const response = NextResponse.next();
 
-  // Tenant slug header
+  // Tenant slug + interface type headers
   if (tenantSlug) {
     response.headers.set("x-tenant-slug", tenantSlug);
+    response.headers.set("x-interface-type", isAdminInterface(tenantSlug) ? "super_admin" : "tenant");
   }
 
   // Prevent browser caching on authenticated pages (back-button fix after logout)
@@ -47,13 +48,20 @@ const middleware: NextMiddleware = auth((req: NextRequest) => {
 
 export default middleware;
 
+/** Reserved slug: admin.app.kern.dev → super admin interface */
+const ADMIN_SLUG = "admin";
+
 function extractTenantSlug(hostname: string): string | null {
-  if (hostname === "localhost" || hostname === "127.0.0.1") return "dev-tenant";
+  if (hostname === "localhost" || hostname === "127.0.0.1") return "dev";
   if (hostname.endsWith(`.${ROOT_DOMAIN}`)) {
     const slug = hostname.slice(0, -(ROOT_DOMAIN.length + 1));
     if (slug && !slug.includes(".")) return slug;
   }
   return null;
+}
+
+function isAdminInterface(slug: string | null): boolean {
+  return slug === ADMIN_SLUG;
 }
 
 export const config = {
