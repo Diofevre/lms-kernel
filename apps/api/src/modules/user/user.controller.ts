@@ -48,7 +48,8 @@ export class UserController {
 
     // If super_admin wants all, or if we have a tenantId, proceed
     // The service will filter by tenantId if provided
-    return this.userService.findByTenant(showAll ? "" : tenantId, options);
+    // null = cross-tenant (super_admin), string = specific tenant
+    return this.userService.findByTenant(showAll ? null : tenantId, options);
   }
 
   @Get(":id")

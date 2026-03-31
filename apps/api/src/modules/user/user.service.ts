@@ -7,7 +7,7 @@ export class UserService {
   constructor(private readonly prisma: PrismaService) {}
 
   async findByTenant(
-    tenantId: string,
+    tenantId: string | null,
     options?: { search?: string; role?: string; page?: number; limit?: number },
   ) {
     const page = options?.page ?? 1;
@@ -17,10 +17,13 @@ export class UserService {
     const where: Record<string, unknown> = {
       deletedAt: null,
     };
-    // tenantId is ALWAYS required. The controller must resolve it before calling this.
-    // For super_admin cross-tenant access, pass null explicitly via a separate method.
-    if (tenantId) {
+    // tenantId: non-empty string = filter by tenant, null = cross-tenant (super_admin only)
+    // Empty string is NOT valid — controller must pass null explicitly for cross-tenant
+    if (typeof tenantId === "string" && tenantId.length > 0) {
       where["tenantId"] = tenantId;
+    } else if (tenantId !== null) {
+      // Safety: empty string should never reach here
+      where["tenantId"] = "invalid-tenant-blocks-all-results";
     }
 
     if (options?.search) {

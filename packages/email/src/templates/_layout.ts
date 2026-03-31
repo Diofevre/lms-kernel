@@ -1,6 +1,21 @@
 import type { TenantBranding } from "../types.js";
 
 /**
+ * Escape HTML to prevent XSS injection in email templates.
+ * MUST be applied to ALL user-provided data before interpolation.
+ */
+export function escapeHtml(text: string): string {
+  const map: Record<string, string> = {
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    '"': "&quot;",
+    "'": "&#039;",
+  };
+  return text.replace(/[&<>"']/g, (c) => map[c] ?? c);
+}
+
+/**
  * Professional HTML email layout — inspired by Stripe/Linear/Resend design patterns.
  *
  * - Max 600px centered container

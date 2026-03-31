@@ -68,7 +68,7 @@ export default function UsersPage() {
       const list = Array.isArray(response) ? response : (response as { data: AppUser[] }).data ?? [];
       setUsers(list.map((u) => ({
         ...u,
-        status: ((u as unknown as { isActive?: boolean }).isActive !== false ? "active" : "inactive") as UserStatus,
+        status: ("isActive" in u && (u as Record<string, unknown>)["isActive"] === false ? "inactive" : "active") as UserStatus,
       })));
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erreur de chargement");

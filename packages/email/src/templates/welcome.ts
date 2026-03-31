@@ -1,5 +1,5 @@
 import type { EmailData, EmailLocale } from "../types.js";
-import { wrapLayout, ctaButton } from "./_layout.js";
+import { wrapLayout, ctaButton, escapeHtml } from "./_layout.js";
 
 const subjects: Record<EmailLocale, string> = {
   fr: "Bienvenue sur {name}",
@@ -18,7 +18,7 @@ export function html(data: EmailData): string {
   const color = data.tenant?.primaryColor ?? "#0f172a";
   const url = (data["loginUrl"] as string) ?? "#";
 
-  const greeting = firstName ? ` ${firstName}` : "";
+  const greeting = firstName ? ` ${escapeHtml(firstName)}` : "";
 
   const bodies: Record<EmailLocale, string> = {
     fr: `<h1 style="font-size:22px;font-weight:700;color:#18181b;margin:0 0 16px 0;">Bienvenue${greeting} !</h1>

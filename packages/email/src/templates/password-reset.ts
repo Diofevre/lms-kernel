@@ -1,5 +1,5 @@
 import type { EmailData, EmailLocale } from "../types.js";
-import { wrapLayout, ctaButton } from "./_layout.js";
+import { wrapLayout, ctaButton, escapeHtml } from "./_layout.js";
 
 const subjects: Record<EmailLocale, string> = {
   fr: "R\u00e9initialisez votre mot de passe",
@@ -16,7 +16,7 @@ export function html(data: EmailData): string {
   const firstName = data.firstName ?? "";
   const color = data.tenant?.primaryColor ?? "#0f172a";
   const url = (data["resetUrl"] as string) ?? "#";
-  const greeting = firstName ? ` ${firstName}` : "";
+  const greeting = firstName ? ` ${escapeHtml(firstName)}` : "";
 
   const bodies: Record<EmailLocale, string> = {
     fr: `<h1 style="font-size:22px;font-weight:700;color:#18181b;margin:0 0 16px 0;">R&eacute;initialisation du mot de passe</h1>

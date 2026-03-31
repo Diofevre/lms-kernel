@@ -1,5 +1,5 @@
 import type { EmailData, EmailLocale } from "../types.js";
-import { wrapLayout } from "./_layout.js";
+import { wrapLayout, escapeHtml } from "./_layout.js";
 
 const subjects: Record<EmailLocale, string> = {
   fr: "Demande re\u00e7ue \u2014 #{id}",
@@ -18,7 +18,8 @@ export function html(data: EmailData): string {
   const firstName = data.firstName ?? "";
   const ticketSubject = (data["ticketSubject"] as string) ?? "";
   const ticketId = ((data["ticketId"] as string) ?? "").slice(0, 8);
-  const greeting = firstName ? ` ${firstName}` : "";
+  const greeting = firstName ? ` ${escapeHtml(firstName)}` : "";
+  const safeSubject = escapeHtml(ticketSubject);
 
   const bodies: Record<EmailLocale, string> = {
     fr: `<h1 style="font-size:22px;font-weight:700;color:#18181b;margin:0 0 16px 0;">Demande re&ccedil;ue</h1>
@@ -29,7 +30,7 @@ export function html(data: EmailData): string {
     <p style="margin:0 0 8px 0;font-size:13px;color:#71717a;text-transform:uppercase;letter-spacing:0.5px;">R&eacute;f&eacute;rence</p>
     <p style="margin:0 0 12px 0;font-size:15px;font-weight:600;color:#18181b;">#${ticketId}</p>
     <p style="margin:0 0 8px 0;font-size:13px;color:#71717a;text-transform:uppercase;letter-spacing:0.5px;">Sujet</p>
-    <p style="margin:0;font-size:15px;color:#18181b;">${ticketSubject}</p>
+    <p style="margin:0;font-size:15px;color:#18181b;">${safeSubject}</p>
   </td></tr>
 </table>
 <p style="margin:0;font-size:13px;color:#71717a;">Notre &eacute;quipe examinera votre demande dans les meilleurs d&eacute;lais. Vous serez notifi&eacute; d&egrave;s qu&rsquo;il y aura une mise &agrave; jour.</p>`,
@@ -42,7 +43,7 @@ export function html(data: EmailData): string {
     <p style="margin:0 0 8px 0;font-size:13px;color:#71717a;text-transform:uppercase;letter-spacing:0.5px;">Reference</p>
     <p style="margin:0 0 12px 0;font-size:15px;font-weight:600;color:#18181b;">#${ticketId}</p>
     <p style="margin:0 0 8px 0;font-size:13px;color:#71717a;text-transform:uppercase;letter-spacing:0.5px;">Subject</p>
-    <p style="margin:0;font-size:15px;color:#18181b;">${ticketSubject}</p>
+    <p style="margin:0;font-size:15px;color:#18181b;">${safeSubject}</p>
   </td></tr>
 </table>
 <p style="margin:0;font-size:13px;color:#71717a;">Our team will review your request shortly. You will be notified when there is an update.</p>`,
@@ -55,7 +56,7 @@ export function html(data: EmailData): string {
     <p style="margin:0 0 8px 0;font-size:13px;color:#71717a;text-transform:uppercase;letter-spacing:0.5px;">Referencia</p>
     <p style="margin:0 0 12px 0;font-size:15px;font-weight:600;color:#18181b;">#${ticketId}</p>
     <p style="margin:0 0 8px 0;font-size:13px;color:#71717a;text-transform:uppercase;letter-spacing:0.5px;">Asunto</p>
-    <p style="margin:0;font-size:15px;color:#18181b;">${ticketSubject}</p>
+    <p style="margin:0;font-size:15px;color:#18181b;">${safeSubject}</p>
   </td></tr>
 </table>
 <p style="margin:0;font-size:13px;color:#71717a;">Nuestro equipo revisar&aacute; su solicitud a la brevedad.</p>`,

@@ -1,5 +1,5 @@
 import type { EmailData, EmailLocale } from "../types.js";
-import { wrapLayout } from "./_layout.js";
+import { wrapLayout, escapeHtml } from "./_layout.js";
 
 const subjects: Record<EmailLocale, string> = {
   fr: "Mise \u00e0 jour \u2014 #{id}",
@@ -18,7 +18,8 @@ export function html(data: EmailData): string {
   const firstName = data.firstName ?? "";
   const ticketSubject = (data["ticketSubject"] as string) ?? "";
   const newStatus = (data["newStatus"] as string) ?? "";
-  const greeting = firstName ? ` ${firstName}` : "";
+  const greeting = firstName ? ` ${escapeHtml(firstName)}` : "";
+  const safeSubject = escapeHtml(ticketSubject);
 
   const statusMap: Record<string, Record<EmailLocale, { label: string; color: string }>> = {
     open: { fr: { label: "Ouvert", color: "#f59e0b" }, en: { label: "Open", color: "#f59e0b" }, es: { label: "Abierto", color: "#f59e0b" } },
@@ -34,19 +35,19 @@ export function html(data: EmailData): string {
   const bodies: Record<EmailLocale, string> = {
     fr: `<h1 style="font-size:22px;font-weight:700;color:#18181b;margin:0 0 16px 0;">Mise &agrave; jour de votre demande</h1>
 <p style="margin:0 0 12px 0;">Bonjour${greeting},</p>
-<p style="margin:0 0 20px 0;">Le statut de votre demande <strong>&laquo; ${ticketSubject} &raquo;</strong> a chang&eacute;.</p>
+<p style="margin:0 0 20px 0;">Le statut de votre demande <strong>&laquo; ${safeSubject} &raquo;</strong> a chang&eacute;.</p>
 <p style="margin:0 0 20px 0;">Nouveau statut : ${statusBadge}</p>
 <p style="margin:0;font-size:13px;color:#71717a;">Si vous avez des questions, n&rsquo;h&eacute;sitez pas &agrave; r&eacute;pondre &agrave; ce courriel.</p>`,
 
     en: `<h1 style="font-size:22px;font-weight:700;color:#18181b;margin:0 0 16px 0;">Request updated</h1>
 <p style="margin:0 0 12px 0;">Hello${greeting},</p>
-<p style="margin:0 0 20px 0;">The status of your request <strong>&ldquo;${ticketSubject}&rdquo;</strong> has changed.</p>
+<p style="margin:0 0 20px 0;">The status of your request <strong>&ldquo;${safeSubject}&rdquo;</strong> has changed.</p>
 <p style="margin:0 0 20px 0;">New status: ${statusBadge}</p>
 <p style="margin:0;font-size:13px;color:#71717a;">If you have any questions, feel free to reply to this email.</p>`,
 
     es: `<h1 style="font-size:22px;font-weight:700;color:#18181b;margin:0 0 16px 0;">Solicitud actualizada</h1>
 <p style="margin:0 0 12px 0;">Hola${greeting},</p>
-<p style="margin:0 0 20px 0;">El estado de su solicitud <strong>&laquo; ${ticketSubject} &raquo;</strong> ha cambiado.</p>
+<p style="margin:0 0 20px 0;">El estado de su solicitud <strong>&laquo; ${safeSubject} &raquo;</strong> ha cambiado.</p>
 <p style="margin:0 0 20px 0;">Nuevo estado: ${statusBadge}</p>
 <p style="margin:0;font-size:13px;color:#71717a;">Si tiene preguntas, responda a este correo.</p>`,
   };
