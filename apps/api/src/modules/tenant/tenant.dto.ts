@@ -24,11 +24,13 @@ export class CreateTenantDto {
   @ApiPropertyOptional()
   @IsOptional()
   @IsString()
+  @Matches(/^#[0-9a-fA-F]{3,8}$/, { message: "primaryColor must be a valid hex color (e.g. #003366)" })
   primaryColor?: string;
 
   @ApiPropertyOptional()
   @IsOptional()
   @IsString()
+  @Matches(/^https?:\/\//, { message: "logoUrl must be a valid HTTP(S) URL" })
   logoUrl?: string;
 
   @ApiPropertyOptional()
@@ -79,11 +81,13 @@ export class UpdateTenantDto {
   @ApiPropertyOptional()
   @IsOptional()
   @IsString()
+  @Matches(/^#[0-9a-fA-F]{3,8}$/, { message: "primaryColor must be a valid hex color (e.g. #003366)" })
   primaryColor?: string;
 
   @ApiPropertyOptional()
   @IsOptional()
   @IsString()
+  @Matches(/^https?:\/\//, { message: "logoUrl must be a valid HTTP(S) URL" })
   logoUrl?: string;
 
   @ApiPropertyOptional()
