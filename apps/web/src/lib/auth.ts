@@ -97,6 +97,8 @@ export const authConfig: NextAuthConfig = {
         token.refreshToken = user.refreshToken;
         token.provider = "credentials";
         token.expiresAt = now + JWT_MAX_AGE;
+        token.userRoles = user.roles;
+        token.tenantId = user.tenantId;
         return token;
       }
 
@@ -109,9 +111,10 @@ export const authConfig: NextAuthConfig = {
     },
 
     session({ session, token }) {
-      // Properly typed — no `as any` needed thanks to type augmentation
       session.accessToken = token.accessToken;
       session.error = token.error;
+      session.userRoles = token.userRoles;
+      session.tenantId = token.tenantId;
       return session;
     },
 

@@ -77,7 +77,8 @@
     "audit": "Audit",
     "privacy": "Confidentialité",
     "settings": "Paramètres",
-    "logout": "Se déconnecter"
+    "logout": "Se déconnecter",
+    "branding": "Apparence"
   },
   "dashboard": {
     "title": "Tableau de bord",

@@ -44,6 +44,25 @@ export class TenantService {
     return this.prisma.tenant.update({ where: { id }, data });
   }
 
+  /**
+   * Public branding — no sensitive data. Used by login page before auth.
+   */
+  async getBranding(slug: string) {
+    const tenant = await this.prisma.tenant.findUnique({
+      where: { slug },
+      select: {
+        name: true,
+        primaryColor: true,
+        logoUrl: true,
+        enabledSsoProviders: true,
+      },
+    });
+    if (!tenant) {
+      return { name: "Kern", primaryColor: "#0f172a", logoUrl: null, enabledSsoProviders: ["credentials"] };
+    }
+    return tenant;
+  }
+
   async toggleActive(id: string, isActive: boolean) {
     // Verify tenant exists
     await this.findById(id);

@@ -77,7 +77,8 @@
     "audit": "Audit",
     "privacy": "Privacy",
     "settings": "Settings",
-    "logout": "Sign out"
+    "logout": "Sign out",
+    "branding": "Branding"
   },
   "dashboard": {
     "title": "Dashboard",

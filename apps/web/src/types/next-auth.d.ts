@@ -9,11 +9,15 @@ declare module "next-auth" {
   interface Session {
     accessToken?: string | undefined;
     error?: string | undefined;
+    userRoles?: string[] | undefined;
+    tenantId?: string | undefined;
   }
 
   interface User {
     accessToken?: string | undefined;
     refreshToken?: string | undefined;
+    roles?: string[] | undefined;
+    tenantId?: string | undefined;
   }
 }
 
@@ -24,5 +28,7 @@ declare module "next-auth/jwt" {
     provider?: string | undefined;
     expiresAt?: number | undefined;
     error?: string | undefined;
+    userRoles?: string[] | undefined;
+    tenantId?: string | undefined;
   }
 }

@@ -77,7 +77,8 @@
     "audit": "Auditoría",
     "privacy": "Privacidad",
     "settings": "Configuración",
-    "logout": "Cerrar sesión"
+    "logout": "Cerrar sesión",
+    "branding": "Apariencia"
   },
   "dashboard": {
     "title": "Panel de control",

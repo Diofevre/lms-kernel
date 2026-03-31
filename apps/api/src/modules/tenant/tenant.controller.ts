@@ -10,7 +10,7 @@ import {
   ParseUUIDPipe,
 } from "@nestjs/common";
 import { ApiBearerAuth, ApiOperation, ApiTags } from "@nestjs/swagger";
-import { AuthGuard, Roles } from "../auth/auth.guard.js";
+import { AuthGuard, Roles, Public } from "../auth/auth.guard.js";
 import { TenantService } from "./tenant.service.js";
 import { CreateTenantDto, UpdateTenantDto, ToggleTenantDto } from "./tenant.dto.js";
 import type { FastifyRequest } from "fastify";
@@ -41,6 +41,18 @@ export class TenantController {
   async getCurrent(@Req() req: AuthenticatedRequest) {
     const slug = req.tenantSlug ?? req.user.tenantSlug;
     return this.tenantService.findBySlug(slug);
+  }
+
+  @Get("current/branding")
+  @Public()
+  @ApiOperation({
+    summary: "Get tenant branding for login page (public, no auth required)",
+    description: "Returns name, logo, primaryColor, and enabled SSO providers. No sensitive data.",
+  })
+  async getBranding(@Req() req: FastifyRequest & { tenantSlug?: string }) {
+    const slug = req.tenantSlug;
+    if (!slug) return { name: "Kern", primaryColor: "#0f172a", logoUrl: null, enabledSsoProviders: ["credentials"] };
+    return this.tenantService.getBranding(slug);
   }
 
   @Post()
